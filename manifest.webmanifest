@@ -1,0 +1,9 @@
+{
+  "name": "Mastermind 破譯密碼",
+  "short_name": "Mastermind",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#119e88",
+  "theme_color": "#119e88",
+  "description": "支援簡單與難規則、100 關、計時與本機排行榜的 Mastermind 網頁遊戲。"
+}

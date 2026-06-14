@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#119e88" />
+    <title>Mastermind 破譯密碼</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Mastermind</p>
+          <h1>破譯密碼</h1>
+          <p class="subtitle">7 步內找出 4 格顏色密碼。方向鍵移動與換色，Enter 或空白鍵判定。</p>
+        </div>
+        <div class="hero-stats" aria-label="目前遊戲狀態">
+          <span id="modeLabel">簡單規則</span>
+          <strong id="timer">00:00</strong>
+          <span id="bestTime">最佳 --:--</span>
+        </div>
+      </section>
+
+      <section class="game-layout" aria-label="Mastermind 遊戲">
+        <aside class="control-panel" aria-label="關卡與規則">
+          <div class="panel-section">
+            <h2>規則</h2>
+            <div class="segmented" role="tablist" aria-label="選擇規則">
+              <button class="segment active" type="button" data-mode="easy">簡單</button>
+              <button class="segment" type="button" data-mode="hard">難</button>
+            </div>
+            <p class="rule-note" id="ruleNote">每格下方顯示提示：綠色位置正確，白色顏色正確但位置錯，黑色不在答案中。</p>
+          </div>
+
+          <div class="panel-section">
+            <div class="section-row">
+              <h2>關卡</h2>
+              <span id="levelText">Lv. 001</span>
+            </div>
+            <input id="levelRange" type="range" min="1" max="100" value="1" />
+            <div class="level-actions">
+              <button class="small-button" type="button" id="prevLevel" aria-label="上一關">‹</button>
+              <select id="levelSelect" aria-label="選擇關卡"></select>
+              <button class="small-button" type="button" id="nextLevel" aria-label="下一關">›</button>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="section-row">
+              <h2>排行榜</h2>
+              <button class="text-button" type="button" id="clearRank">清除</button>
+            </div>
+            <ol class="ranking" id="ranking"></ol>
+          </div>
+        </aside>
+
+        <section class="machine" aria-label="遊戲盤">
+          <div class="machine-top">
+            <span class="light light-red"></span>
+            <span class="light light-green"></span>
+            <span class="light light-yellow"></span>
+          </div>
+          <div class="board-wrap">
+            <div class="board" id="board"></div>
+          </div>
+          <div class="palette" id="palette" aria-label="顏色選擇"></div>
+          <div class="machine-bottom">
+            <div class="display" id="attemptDisplay">1/7</div>
+            <button class="judge-button" type="button" id="judgeButton">判定</button>
+            <button class="reset-button" type="button" id="resetButton">重來</button>
+          </div>
+        </section>
+
+        <aside class="info-panel" aria-label="操作與提示說明">
+          <div class="panel-section">
+            <h2>鍵盤</h2>
+            <div class="key-grid">
+              <span>← →</span><p>選格子</p>
+              <span>↑ ↓</span><p>換顏色</p>
+              <span>Enter</span><p>判定</p>
+              <span>Space</span><p>判定</p>
+            </div>
+          </div>
+          <div class="panel-section clue-card">
+            <h2>提示</h2>
+            <div class="clue-row"><span class="sample-line green"></span><p>顏色與位置都正確</p></div>
+            <div class="clue-row"><span class="sample-line white"></span><p>顏色正確，位置錯誤</p></div>
+            <div class="clue-row"><span class="sample-line black"></span><p>答案沒有此顏色</p></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <dialog id="resultDialog" class="result-dialog">
+      <form method="dialog">
+        <p class="eyebrow" id="resultKicker">通關</p>
+        <h2 id="resultTitle">密碼已破譯</h2>
+        <p id="resultDetail"></p>
+        <div class="dialog-actions">
+          <button type="button" class="secondary-button" id="dialogReplay">再玩一次</button>
+          <button type="button" class="judge-button" id="dialogNext">下一關</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
