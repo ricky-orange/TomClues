@@ -125,7 +125,8 @@ p {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 180px;
+  width: 132px;
+  height: auto;
   transform: translateX(-50%);
   transform-origin: 50% 0;
   animation: spyFloat 3.4s ease-in-out infinite;
@@ -811,7 +812,7 @@ p {
   }
 
   .spy {
-    width: 118px;
+    width: 132px;
   }
 
   .games-section {
