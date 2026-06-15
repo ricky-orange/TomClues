@@ -41,6 +41,50 @@ const bullsState = {
   solved: false,
 };
 
+const wordSettings = {
+  easy: { label: "Easy", length: 3, attempts: 5 },
+  normal: { label: "Normal", length: 5, attempts: 6 },
+  hard: { label: "Hard", length: 7, attempts: 8 },
+};
+
+const wordLists = {
+  easy: [
+    "age", "air", "arm", "art", "ask", "bad", "bat", "big", "bit", "box",
+    "boy", "bug", "bus", "cat", "cow", "cup", "day", "dog", "ear", "eat",
+    "egg", "eye", "fan", "far", "fox", "fun", "gas", "hat", "hen", "hot",
+    "ice", "jam", "key", "leg", "man", "map", "net", "new", "old", "pen",
+    "pig", "red", "run", "sad", "sea", "sun", "tea", "toy", "web", "yes",
+  ],
+  normal: [
+    "apple", "beach", "black", "bread", "brown", "chair", "child", "class", "clean", "cloud",
+    "dream", "drink", "earth", "fruit", "green", "happy", "heart", "honey", "house", "laugh",
+    "learn", "light", "lunch", "money", "month", "movie", "music", "night", "paper", "party",
+    "phone", "plant", "river", "round", "short", "sleep", "small", "smile", "sound", "speak",
+    "stone", "story", "sugar", "sweet", "table", "teach", "train", "watch", "water", "world",
+  ],
+  hard: [
+    "against", "already", "another", "because", "between", "brother", "careful", "central", "control", "country",
+    "culture", "example", "evening", "freedom", "healthy", "history", "holiday", "journey", "kitchen", "library",
+    "manager", "measure", "message", "million", "morning", "natural", "picture", "popular", "present", "problem",
+    "quickly", "science", "service", "special", "station", "student", "subject", "success", "teacher", "traffic",
+    "usually", "village", "weather", "website", "western", "without", "writing", "believe", "company", "nothing",
+  ],
+};
+
+const wordsState = {
+  mode: "easy",
+  level: 1,
+  currentGuess: [],
+  guesses: [],
+  feedbacks: [],
+  answer: "",
+  activeRow: 0,
+  startedAt: 0,
+  elapsedMs: 0,
+  timerId: 0,
+  solved: false,
+};
+
 const homeScreen = document.querySelector("#homeScreen");
 const gameScreen = document.querySelector("#gameScreen");
 const bullsScreen = document.querySelector("#bullsScreen");
@@ -69,6 +113,18 @@ const bullsBoard = document.querySelector("#bullsBoard");
 const bullsKeypad = document.querySelector("#bullsKeypad");
 const bullsAttemptDisplay = document.querySelector("#bullsAttemptDisplay");
 const bullsRankingEl = document.querySelector("#bullsRanking");
+const wordsScreen = document.querySelector("#wordsScreen");
+const wordsModeLabel = document.querySelector("#wordsModeLabel");
+const wordsTimerEl = document.querySelector("#wordsTimer");
+const wordsBestTimeEl = document.querySelector("#wordsBestTime");
+const wordsLevelRange = document.querySelector("#wordsLevelRange");
+const wordsLevelSelect = document.querySelector("#wordsLevelSelect");
+const wordsLevelText = document.querySelector("#wordsLevelText");
+const wordsBoard = document.querySelector("#wordsBoard");
+const wordsKeyboard = document.querySelector("#wordsKeyboard");
+const wordsAttemptDisplay = document.querySelector("#wordsAttemptDisplay");
+const wordsRankingEl = document.querySelector("#wordsRanking");
+const wordsRuleNote = document.querySelector("#wordsRuleNote");
 
 let activeDialogGame = "mastermind";
 
@@ -89,6 +145,10 @@ function storageKey() {
 
 function bullsStorageKey() {
   return `tom-clues:bulls-cows:level:${bullsState.level}`;
+}
+
+function wordsStorageKey() {
+  return `tom-clues:word-clues:${wordsState.mode}:level:${wordsState.level}`;
 }
 
 function getRanks() {
@@ -113,6 +173,18 @@ function getBullsRanks() {
 
 function setBullsRanks(ranks) {
   localStorage.setItem(bullsStorageKey(), JSON.stringify(ranks.slice(0, 10)));
+}
+
+function getWordsRanks() {
+  try {
+    return JSON.parse(localStorage.getItem(wordsStorageKey()) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function setWordsRanks(ranks) {
+  localStorage.setItem(wordsStorageKey(), JSON.stringify(ranks.slice(0, 10)));
 }
 
 function seededRandom(seed) {
@@ -148,6 +220,10 @@ function generateBullsAnswer(level) {
   }
 
   return answer;
+}
+
+function getWordAnswer(mode, level) {
+  return wordLists[mode][level - 1];
 }
 
 function evaluateGuess(guess, answer) {
@@ -192,16 +268,42 @@ function evaluateBullsGuess(guess, answer) {
   return { a, b };
 }
 
+function evaluateWordGuess(guessLetters, answerWord) {
+  const answer = answerWord.toUpperCase().split("");
+  const marks = Array(answer.length).fill("black");
+  const remaining = {};
+
+  guessLetters.forEach((letter, index) => {
+    if (letter === answer[index]) {
+      marks[index] = "green";
+    } else {
+      remaining[answer[index]] = (remaining[answer[index]] || 0) + 1;
+    }
+  });
+
+  guessLetters.forEach((letter, index) => {
+    if (marks[index] === "green") return;
+    if (remaining[letter] > 0) {
+      marks[index] = "white";
+      remaining[letter] -= 1;
+    }
+  });
+
+  return marks;
+}
+
 function showScreen(screen) {
   state.screen = screen;
   homeScreen.classList.toggle("is-hidden", screen !== "home");
   gameScreen.classList.toggle("is-hidden", screen !== "mastermind");
   bullsScreen.classList.toggle("is-hidden", screen !== "bulls");
+  wordsScreen.classList.toggle("is-hidden", screen !== "words");
   document.body.classList.toggle("in-game", screen !== "home");
 
   if (screen === "home") {
     stopTimer();
     stopBullsTimer();
+    stopWordsTimer();
     if (resultDialog.open) resultDialog.close();
   }
 }
@@ -221,6 +323,15 @@ function ensureBullsTimer() {
   bullsState.timerId = window.setInterval(() => {
     bullsState.elapsedMs = Date.now() - bullsState.startedAt;
     bullsTimerEl.textContent = formatTime(bullsState.elapsedMs);
+  }, 250);
+}
+
+function ensureWordsTimer() {
+  if (wordsState.startedAt || wordsState.solved || state.screen !== "words") return;
+  wordsState.startedAt = Date.now() - wordsState.elapsedMs;
+  wordsState.timerId = window.setInterval(() => {
+    wordsState.elapsedMs = Date.now() - wordsState.startedAt;
+    wordsTimerEl.textContent = formatTime(wordsState.elapsedMs);
   }, 250);
 }
 
@@ -246,6 +357,17 @@ function stopBullsTimer() {
   bullsTimerEl.textContent = formatTime(bullsState.elapsedMs);
 }
 
+function stopWordsTimer() {
+  if (wordsState.timerId) {
+    clearInterval(wordsState.timerId);
+    wordsState.timerId = 0;
+  }
+  if (wordsState.startedAt) {
+    wordsState.elapsedMs = Date.now() - wordsState.startedAt;
+  }
+  wordsTimerEl.textContent = formatTime(wordsState.elapsedMs);
+}
+
 function updateBestTime() {
   const best = getRanks()[0];
   bestTimeEl.textContent = best ? `Best ${formatTime(best.time)}` : "Best --:--";
@@ -256,9 +378,15 @@ function updateBullsBestTime() {
   bullsBestTimeEl.textContent = best ? `Best ${formatTime(best.time)}` : "Best --:--";
 }
 
+function updateWordsBestTime() {
+  const best = getWordsRanks()[0];
+  wordsBestTimeEl.textContent = best ? `Best ${formatTime(best.time)}` : "Best --:--";
+}
+
 function renderLevelOptions() {
   levelSelect.innerHTML = "";
   bullsLevelSelect.innerHTML = "";
+  wordsLevelSelect.innerHTML = "";
   for (let level = 1; level <= 100; level += 1) {
     const option = document.createElement("option");
     option.value = String(level);
@@ -269,6 +397,13 @@ function renderLevelOptions() {
     bullsOption.value = String(level);
     bullsOption.textContent = `Lv. ${String(level).padStart(3, "0")}`;
     bullsLevelSelect.append(bullsOption);
+  }
+
+  for (let level = 1; level <= 50; level += 1) {
+    const wordsOption = document.createElement("option");
+    wordsOption.value = String(level);
+    wordsOption.textContent = `Lv. ${String(level).padStart(3, "0")}`;
+    wordsLevelSelect.append(wordsOption);
   }
 }
 
@@ -393,6 +528,25 @@ function renderBullsRanks() {
   });
 }
 
+function renderWordsRanks() {
+  const ranks = getWordsRanks();
+  wordsRankingEl.innerHTML = "";
+
+  if (!ranks.length) {
+    const empty = document.createElement("li");
+    empty.className = "empty-rank";
+    empty.textContent = "No clears on this level yet";
+    wordsRankingEl.append(empty);
+    return;
+  }
+
+  ranks.forEach((rank) => {
+    const item = document.createElement("li");
+    item.innerHTML = `<strong>${formatTime(rank.time)}</strong> / ${formatMoves(rank.moves)}`;
+    wordsRankingEl.append(item);
+  });
+}
+
 function renderMeta() {
   const levelName = `Lv. ${String(state.level).padStart(3, "0")}`;
   levelText.textContent = levelName;
@@ -404,7 +558,7 @@ function renderMeta() {
     ? "Each slot shows a clue below it: green means right color and right spot, white means right color in the wrong spot, black means the color is not in the answer."
     : "The dots on the right show only totals: green dots are right color and right spot, white dots are right color in the wrong spot, black dots are colors not in the answer.";
 
-  document.querySelectorAll(".segment").forEach((button) => {
+  document.querySelectorAll(".segment[data-mode]").forEach((button) => {
     button.classList.toggle("active", button.dataset.mode === state.mode);
   });
 }
@@ -468,6 +622,106 @@ function renderBullsMeta() {
   bullsAttemptDisplay.textContent = bullsState.solved ? "OK" : `${Math.min(bullsState.activeRow + 1, bullsMaxAttempts)}/${bullsMaxAttempts}`;
 }
 
+function currentWordSettings() {
+  return wordSettings[wordsState.mode];
+}
+
+function renderWordsBoard() {
+  const settings = currentWordSettings();
+  wordsBoard.innerHTML = "";
+
+  for (let rowIndex = 0; rowIndex < settings.attempts; rowIndex += 1) {
+    const row = document.createElement("div");
+    row.className = `word-row${rowIndex === wordsState.activeRow && !wordsState.solved ? " active" : ""}`;
+    row.style.gridTemplateColumns = `repeat(${settings.length}, minmax(30px, 52px))`;
+
+    const letters = wordsState.guesses[rowIndex]
+      || (rowIndex === wordsState.activeRow ? wordsState.currentGuess : [])
+      || [];
+    const feedback = wordsState.feedbacks[rowIndex] || [];
+
+    for (let slotIndex = 0; slotIndex < settings.length; slotIndex += 1) {
+      const cell = document.createElement("div");
+      cell.className = "word-cell";
+
+      const letter = letters[slotIndex] || "";
+      const mark = feedback[slotIndex] || "";
+      const tile = document.createElement("span");
+      tile.className = `letter-tile${letter ? " filled" : ""}${mark ? ` ${mark}` : ""}`;
+      tile.textContent = letter;
+      tile.setAttribute("aria-label", `Attempt ${rowIndex + 1}, letter ${slotIndex + 1}`);
+
+      const clue = document.createElement("span");
+      clue.className = `word-clue ${mark}`;
+
+      cell.append(tile, clue);
+      row.append(cell);
+    }
+
+    wordsBoard.append(row);
+  }
+}
+
+function renderWordsKeyboard() {
+  wordsKeyboard.innerHTML = "";
+  const rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+
+  rows.forEach((letters, rowIndex) => {
+    const row = document.createElement("div");
+    row.className = "word-key-row";
+
+    if (rowIndex === 2) {
+      const enter = document.createElement("button");
+      enter.type = "button";
+      enter.className = "word-action-button";
+      enter.textContent = "ENTER";
+      enter.disabled = wordsState.solved;
+      enter.addEventListener("click", submitWordGuess);
+      row.append(enter);
+    }
+
+    letters.split("").forEach((letter) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "letter-button";
+      button.textContent = letter;
+      button.disabled = wordsState.solved;
+      button.setAttribute("aria-label", `Enter ${letter}`);
+      button.addEventListener("click", () => addWordLetter(letter));
+      row.append(button);
+    });
+
+    if (rowIndex === 2) {
+      const erase = document.createElement("button");
+      erase.type = "button";
+      erase.className = "word-action-button";
+      erase.textContent = "DEL";
+      erase.disabled = wordsState.solved;
+      erase.addEventListener("click", removeWordLetter);
+      row.append(erase);
+    }
+
+    wordsKeyboard.append(row);
+  });
+}
+
+function renderWordsMeta() {
+  const settings = currentWordSettings();
+  const levelName = `Lv. ${String(wordsState.level).padStart(3, "0")}`;
+  wordsLevelText.textContent = levelName;
+  wordsLevelRange.value = String(wordsState.level);
+  wordsLevelSelect.value = String(wordsState.level);
+  wordsAttemptDisplay.textContent = wordsState.solved
+    ? "OK"
+    : `${Math.min(wordsState.activeRow + 1, settings.attempts)}/${settings.attempts}`;
+  wordsModeLabel.textContent = settings.label;
+  wordsRuleNote.textContent = `Guess the ${settings.length}-letter word in ${settings.attempts} tries. Green means right letter and right spot. White means right letter in the wrong spot.`;
+
+  document.querySelectorAll(".segment[data-word-mode]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.wordMode === wordsState.mode);
+  });
+}
+
 function render() {
   renderPalette();
   renderBoard();
@@ -485,6 +739,14 @@ function renderBulls() {
   updateBullsBestTime();
 }
 
+function renderWords() {
+  renderWordsBoard();
+  renderWordsKeyboard();
+  renderWordsRanks();
+  renderWordsMeta();
+  updateWordsBestTime();
+}
+
 function setCurrentSlotColor(colorIndex) {
   if (state.solved) return;
   ensureTimer();
@@ -494,13 +756,13 @@ function setCurrentSlotColor(colorIndex) {
 }
 
 function moveSlot(direction) {
-  if (state.screen !== "game") return;
+  if (state.screen !== "mastermind") return;
   state.selectedSlot = (state.selectedSlot + direction + codeLength) % codeLength;
   render();
 }
 
 function moveColor(direction) {
-  if (state.screen !== "game") return;
+  if (state.screen !== "mastermind") return;
   state.selectedColor = (state.selectedColor + direction + palette.length) % palette.length;
   setCurrentSlotColor(state.selectedColor);
   render();
@@ -581,11 +843,64 @@ function submitBullsGuess() {
   renderBulls();
 }
 
+function addWordLetter(letter) {
+  const settings = currentWordSettings();
+  if (wordsState.solved || state.screen !== "words") return;
+  if (wordsState.currentGuess.length >= settings.length) return;
+
+  ensureWordsTimer();
+  wordsState.currentGuess.push(letter.toUpperCase());
+  renderWords();
+}
+
+function removeWordLetter() {
+  if (wordsState.solved || state.screen !== "words") return;
+  wordsState.currentGuess.pop();
+  renderWords();
+}
+
+function submitWordGuess() {
+  const settings = currentWordSettings();
+  if (wordsState.solved || state.screen !== "words") return;
+  if (wordsState.currentGuess.length !== settings.length) {
+    flashWordsAttempt("Fill");
+    return;
+  }
+
+  ensureWordsTimer();
+  const guess = [...wordsState.currentGuess];
+  const feedback = evaluateWordGuess(guess, wordsState.answer);
+  wordsState.guesses[wordsState.activeRow] = guess;
+  wordsState.feedbacks[wordsState.activeRow] = feedback;
+  wordsState.currentGuess = [];
+
+  if (feedback.every((mark) => mark === "green")) {
+    winWordsGame();
+    return;
+  }
+
+  if (wordsState.activeRow >= settings.attempts - 1) {
+    loseWordsGame();
+    return;
+  }
+
+  wordsState.activeRow += 1;
+  renderWords();
+}
+
 function flashBullsAttempt(text) {
   const original = bullsAttemptDisplay.textContent;
   bullsAttemptDisplay.textContent = text;
   window.setTimeout(() => {
     bullsAttemptDisplay.textContent = original;
+  }, 650);
+}
+
+function flashWordsAttempt(text) {
+  const original = wordsAttemptDisplay.textContent;
+  wordsAttemptDisplay.textContent = text;
+  window.setTimeout(() => {
+    wordsAttemptDisplay.textContent = original;
   }, 650);
 }
 
@@ -645,6 +960,30 @@ function loseBullsGame() {
   renderBulls();
 }
 
+function winWordsGame() {
+  activeDialogGame = "words";
+  wordsState.solved = true;
+  stopWordsTimer();
+  const ranks = getWordsRanks();
+  ranks.push({
+    time: wordsState.elapsedMs,
+    moves: wordsState.activeRow + 1,
+    date: new Date().toISOString(),
+  });
+  ranks.sort((a, b) => a.time - b.time || a.moves - b.moves);
+  setWordsRanks(ranks);
+  showWordsResult(true);
+  renderWords();
+}
+
+function loseWordsGame() {
+  activeDialogGame = "words";
+  stopWordsTimer();
+  wordsState.solved = true;
+  showWordsResult(false);
+  renderWords();
+}
+
 function showResult(won) {
   const answerText = state.answer.map((index) => palette[index].name).join(", ");
   resultKicker.textContent = won ? "Solved" : "Case Failed";
@@ -664,6 +1003,19 @@ function showBullsResult(won) {
   resultTitle.textContent = won ? "Code Cracked" : "No Moves Left";
   resultDetail.textContent = won
     ? `${formatTime(bullsState.elapsedMs)}, solved in ${formatMoves(bullsState.activeRow + 1)}.`
+    : `The answer was ${answerText}. Reset keeps the same level answer.`;
+
+  if (typeof resultDialog.showModal === "function") {
+    resultDialog.showModal();
+  }
+}
+
+function showWordsResult(won) {
+  const answerText = wordsState.answer.toUpperCase();
+  resultKicker.textContent = won ? "Solved" : "Case Failed";
+  resultTitle.textContent = won ? "Word Found" : "No Moves Left";
+  resultDetail.textContent = won
+    ? `${formatTime(wordsState.elapsedMs)}, solved in ${formatMoves(wordsState.activeRow + 1)}.`
     : `The answer was ${answerText}. Reset keeps the same level answer.`;
 
   if (typeof resultDialog.showModal === "function") {
@@ -700,6 +1052,20 @@ function resetBullsGame({ keepElapsed = false } = {}) {
   renderBulls();
 }
 
+function resetWordsGame({ keepElapsed = false } = {}) {
+  stopWordsTimer();
+  wordsState.answer = getWordAnswer(wordsState.mode, wordsState.level);
+  wordsState.currentGuess = [];
+  wordsState.guesses = [];
+  wordsState.feedbacks = [];
+  wordsState.activeRow = 0;
+  wordsState.startedAt = 0;
+  wordsState.elapsedMs = keepElapsed ? wordsState.elapsedMs : 0;
+  wordsState.solved = false;
+  wordsTimerEl.textContent = formatTime(wordsState.elapsedMs);
+  renderWords();
+}
+
 function setLevel(level) {
   state.level = Math.min(100, Math.max(1, Number(level)));
   resetGame();
@@ -710,9 +1076,19 @@ function setBullsLevel(level) {
   resetBullsGame();
 }
 
+function setWordsLevel(level) {
+  wordsState.level = Math.min(50, Math.max(1, Number(level)));
+  resetWordsGame();
+}
+
 function setMode(mode) {
   state.mode = mode;
   resetGame();
+}
+
+function setWordsMode(mode) {
+  wordsState.mode = mode;
+  resetWordsGame();
 }
 
 function clearRank() {
@@ -723,6 +1099,11 @@ function clearRank() {
 function clearBullsRank() {
   localStorage.removeItem(bullsStorageKey());
   renderBulls();
+}
+
+function clearWordsRank() {
+  localStorage.removeItem(wordsStorageKey());
+  renderWords();
 }
 
 function bindEvents() {
@@ -736,11 +1117,21 @@ function bindEvents() {
     renderBulls();
   });
 
+  document.querySelector("[data-open-game='words']").addEventListener("click", () => {
+    showScreen("words");
+    renderWords();
+  });
+
   document.querySelector("#backHome").addEventListener("click", () => showScreen("home"));
   document.querySelector("#bullsBackHome").addEventListener("click", () => showScreen("home"));
+  document.querySelector("#wordsBackHome").addEventListener("click", () => showScreen("home"));
 
-  document.querySelectorAll(".segment").forEach((button) => {
+  document.querySelectorAll(".segment[data-mode]").forEach((button) => {
     button.addEventListener("click", () => setMode(button.dataset.mode));
+  });
+
+  document.querySelectorAll(".segment[data-word-mode]").forEach((button) => {
+    button.addEventListener("click", () => setWordsMode(button.dataset.wordMode));
   });
 
   levelRange.addEventListener("input", (event) => setLevel(event.target.value));
@@ -757,10 +1148,19 @@ function bindEvents() {
   document.querySelector("#bullsCheckButton").addEventListener("click", submitBullsGuess);
   document.querySelector("#bullsResetButton").addEventListener("click", () => resetBullsGame());
   document.querySelector("#bullsClearRank").addEventListener("click", clearBullsRank);
+  wordsLevelRange.addEventListener("input", (event) => setWordsLevel(event.target.value));
+  wordsLevelSelect.addEventListener("change", (event) => setWordsLevel(event.target.value));
+  document.querySelector("#wordsPrevLevel").addEventListener("click", () => setWordsLevel(wordsState.level - 1));
+  document.querySelector("#wordsNextLevel").addEventListener("click", () => setWordsLevel(wordsState.level + 1));
+  document.querySelector("#wordsEnterButton").addEventListener("click", submitWordGuess);
+  document.querySelector("#wordsResetButton").addEventListener("click", () => resetWordsGame());
+  document.querySelector("#wordsClearRank").addEventListener("click", clearWordsRank);
   document.querySelector("#dialogReplay").addEventListener("click", () => {
     resultDialog.close();
     if (activeDialogGame === "bulls") {
       resetBullsGame();
+    } else if (activeDialogGame === "words") {
+      resetWordsGame();
     } else {
       resetGame();
     }
@@ -769,12 +1169,22 @@ function bindEvents() {
     resultDialog.close();
     if (activeDialogGame === "bulls") {
       setBullsLevel(bullsState.level === 100 ? 1 : bullsState.level + 1);
+    } else if (activeDialogGame === "words") {
+      setWordsLevel(wordsState.level === 50 ? 1 : wordsState.level + 1);
     } else {
       setLevel(state.level === 100 ? 1 : state.level + 1);
     }
   });
 
   window.addEventListener("keydown", (event) => {
+    if (resultDialog.open) return;
+    const isLetter = /^[a-z]$/i.test(event.key);
+    if (state.screen === "words" && isLetter) {
+      event.preventDefault();
+      addWordLetter(event.key.toUpperCase());
+      return;
+    }
+
     const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", " ", "Backspace", "Delete"];
     const isDigit = /^[0-9]$/.test(event.key);
     if (state.screen === "bulls" && isDigit) {
@@ -798,6 +1208,11 @@ function bindEvents() {
       if (event.key === "Backspace" || event.key === "Delete") removeBullsDigit();
       if (event.key === "Enter" || event.key === " ") submitBullsGuess();
     }
+
+    if (state.screen === "words") {
+      if (event.key === "Backspace" || event.key === "Delete") removeWordLetter();
+      if (event.key === "Enter") submitWordGuess();
+    }
   });
 }
 
@@ -805,4 +1220,5 @@ renderLevelOptions();
 bindEvents();
 resetGame();
 resetBullsGame();
+resetWordsGame();
 showScreen("home");
