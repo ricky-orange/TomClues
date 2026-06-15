@@ -1,9 +1,9 @@
 {
-  "name": "Mastermind 破譯密碼",
-  "short_name": "Mastermind",
+  "name": "Tom Clues",
+  "short_name": "Tom Clues",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#119e88",
-  "theme_color": "#119e88",
-  "description": "支援簡單與難規則、100 關、計時與本機排行榜的 Mastermind 網頁遊戲。"
+  "background_color": "#dff3ff",
+  "theme_color": "#8fd7f6",
+  "description": "Tom Clues 是明亮、簡潔、可離線遊玩的推理小遊戲集合。"
 }

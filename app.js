@@ -1,11 +1,11 @@
 const palette = [
-  { name: "紅", hex: "#dc2f45", glow: "rgba(220, 47, 69, 0.72)" },
-  { name: "綠", hex: "#21c768", glow: "rgba(33, 199, 104, 0.72)" },
-  { name: "橙", hex: "#ff8127", glow: "rgba(255, 129, 39, 0.72)" },
-  { name: "藍", hex: "#1689ff", glow: "rgba(22, 137, 255, 0.72)" },
-  { name: "黃", hex: "#ffd32e", glow: "rgba(255, 211, 46, 0.72)" },
-  { name: "紫", hex: "#8d4ce6", glow: "rgba(141, 76, 230, 0.72)" },
-  { name: "青", hex: "#4ed7d5", glow: "rgba(78, 215, 213, 0.72)" },
+  { name: "紅", hex: "#ff5757", glow: "rgba(255, 87, 87, 0.72)" },
+  { name: "綠", hex: "#24dd61", glow: "rgba(36, 221, 97, 0.72)" },
+  { name: "橙", hex: "#ff8b3d", glow: "rgba(255, 139, 61, 0.72)" },
+  { name: "藍", hex: "#2e9cff", glow: "rgba(46, 156, 255, 0.72)" },
+  { name: "黃", hex: "#ffd943", glow: "rgba(255, 217, 67, 0.72)" },
+  { name: "紫", hex: "#7862e8", glow: "rgba(120, 98, 232, 0.72)" },
+  { name: "青", hex: "#15c7e6", glow: "rgba(21, 199, 230, 0.72)" },
 ];
 
 const maxAttempts = 7;
@@ -23,8 +23,11 @@ const state = {
   elapsedMs: 0,
   timerId: 0,
   solved: false,
+  screen: "home",
 };
 
+const homeScreen = document.querySelector("#homeScreen");
+const gameScreen = document.querySelector("#gameScreen");
 const board = document.querySelector("#board");
 const paletteEl = document.querySelector("#palette");
 const timerEl = document.querySelector("#timer");
@@ -49,7 +52,7 @@ function formatTime(ms) {
 }
 
 function storageKey() {
-  return `mastermind:${state.mode}:level:${state.level}`;
+  return `tom-clues:mastermind:${state.mode}:level:${state.level}`;
 }
 
 function getRanks() {
@@ -113,8 +116,20 @@ function evaluateGuess(guess, answer) {
   return { marks, green, white, black: codeLength - green - white };
 }
 
+function showScreen(screen) {
+  state.screen = screen;
+  homeScreen.classList.toggle("is-hidden", screen !== "home");
+  gameScreen.classList.toggle("is-hidden", screen !== "game");
+  document.body.classList.toggle("in-game", screen === "game");
+
+  if (screen === "home") {
+    stopTimer();
+    if (resultDialog.open) resultDialog.close();
+  }
+}
+
 function ensureTimer() {
-  if (state.startedAt || state.solved) return;
+  if (state.startedAt || state.solved || state.screen !== "game") return;
   state.startedAt = Date.now() - state.elapsedMs;
   state.timerId = window.setInterval(() => {
     state.elapsedMs = Date.now() - state.startedAt;
@@ -283,18 +298,20 @@ function setCurrentSlotColor(colorIndex) {
 }
 
 function moveSlot(direction) {
+  if (state.screen !== "game") return;
   state.selectedSlot = (state.selectedSlot + direction + codeLength) % codeLength;
   render();
 }
 
 function moveColor(direction) {
+  if (state.screen !== "game") return;
   state.selectedColor = (state.selectedColor + direction + palette.length) % palette.length;
   setCurrentSlotColor(state.selectedColor);
   render();
 }
 
 function submitGuess() {
-  if (state.solved) return;
+  if (state.solved || state.screen !== "game") return;
   const guess = state.guesses[state.activeRow] || [];
   if (guess.length !== codeLength || guess.some((color) => color === null || color === undefined)) {
     flashAttempt("填滿");
@@ -395,6 +412,13 @@ function clearRank() {
 }
 
 function bindEvents() {
+  document.querySelector("[data-open-game='mastermind']").addEventListener("click", () => {
+    showScreen("game");
+    render();
+  });
+
+  document.querySelector("#backHome").addEventListener("click", () => showScreen("home"));
+
   document.querySelectorAll(".segment").forEach((button) => {
     button.addEventListener("click", () => setMode(button.dataset.mode));
   });
@@ -418,6 +442,7 @@ function bindEvents() {
   window.addEventListener("keydown", (event) => {
     const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", " "];
     if (!keys.includes(event.key)) return;
+    if (state.screen !== "game") return;
     event.preventDefault();
 
     if (event.key === "ArrowLeft") moveSlot(-1);
@@ -431,3 +456,4 @@ function bindEvents() {
 renderLevelOptions();
 bindEvents();
 resetGame();
+showScreen("home");

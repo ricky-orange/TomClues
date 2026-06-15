@@ -3,69 +3,124 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#119e88" />
-    <title>Mastermind 破譯密碼</title>
+    <meta name="theme-color" content="#8fd7f6" />
+    <title>Tom Clues</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app-shell">
-      <section class="hero">
-        <div>
-          <p class="eyebrow">Mastermind</p>
-          <h1>破譯密碼</h1>
-          <p class="subtitle">7 步內找出 4 格顏色密碼。方向鍵移動與換色，Enter 或空白鍵判定。</p>
+      <section class="home-screen" id="homeScreen" aria-label="Tom Clues 首頁">
+        <header class="home-header">
+          <button class="icon-button" type="button" aria-label="設定">
+            <span class="gear-icon" aria-hidden="true"></span>
+          </button>
+          <div class="brand-sign">
+            <span class="star" aria-hidden="true">★</span>
+            <div>
+              <p>Tom Clues</p>
+              <strong>Mini Game Lab</strong>
+            </div>
+            <span class="star" aria-hidden="true">★</span>
+          </div>
+          <button class="icon-button flag-button" type="button" aria-label="語言">
+            <span>TW</span>
+          </button>
+        </header>
+
+        <div class="spy-scene" aria-hidden="true">
+          <div class="rope"></div>
+          <svg class="spy" viewBox="0 0 420 220" role="img">
+            <path d="M152 72c22-24 58-25 78-4 15 15 18 41 7 60l35 18 53-35c12-8 27-5 35 7 8 13 4 28-8 36l-58 38c-10 7-23 8-34 2l-52-27-25 25c-12 12-31 12-43 1l-14-13-40 20c-13 6-29 1-35-12-6-13-1-29 12-35l35-17-12-12c-15-15-14-38 1-52z" />
+            <circle cx="181" cy="91" r="42" />
+            <path d="M119 91c-19 2-31-3-36-16 20 1 31-9 47-22 11-8 25-11 38-8l-3 19c-18 2-31 11-46 27z" />
+            <path d="M330 108l51-37c10-7 24-5 31 5s5 24-5 31l-53 38z" />
+            <path d="M106 151l-49-10c-12-2-20-14-17-26 2-12 14-20 26-17l58 12z" />
+            <circle cx="57" cy="115" r="30" fill="none" stroke="currentColor" stroke-width="13" />
+            <path d="M36 138l-24 25" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" />
+          </svg>
         </div>
-        <div class="hero-stats" aria-label="目前遊戲狀態">
-          <span id="modeLabel">簡單規則</span>
-          <strong id="timer">00:00</strong>
-          <span id="bestTime">最佳 --:--</span>
-        </div>
+
+        <section class="games-section">
+          <div class="section-title">
+            <h1>Choose a Case</h1>
+            <p>明亮、短局、可離線的小遊戲集合。</p>
+          </div>
+          <div class="game-grid">
+            <button class="game-card mastermind-card" type="button" data-open-game="mastermind">
+              <span class="game-art mastermind-art" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+                <b></b><b></b><b></b><b></b>
+              </span>
+              <span class="game-title">MASTER<br />MIND</span>
+              <span class="game-badge">PLAY</span>
+            </button>
+
+            <button class="game-card find-card" type="button" disabled>
+              <span class="game-art find-art" aria-hidden="true">
+                <i></i><b></b><em></em>
+              </span>
+              <span class="game-title">FIND<br />MATCH</span>
+              <span class="game-badge">SOON</span>
+            </button>
+
+            <button class="game-card number-card" type="button" disabled>
+              <span class="game-art number-art" aria-hidden="true">
+                <i>7</i><b>3</b><em>9</em>
+              </span>
+              <span class="game-title">NUMBER<br />RUN</span>
+              <span class="game-badge">SOON</span>
+            </button>
+
+            <button class="game-card words-card" type="button" disabled>
+              <span class="game-art words-art" aria-hidden="true">
+                <i>?</i><b>A</b><em>!</em>
+              </span>
+              <span class="game-title">WORD<br />CLUES</span>
+              <span class="game-badge">SOON</span>
+            </button>
+          </div>
+        </section>
       </section>
 
-      <section class="game-layout" aria-label="Mastermind 遊戲">
-        <aside class="control-panel" aria-label="關卡與規則">
-          <div class="panel-section">
-            <h2>規則</h2>
-            <div class="segmented" role="tablist" aria-label="選擇規則">
-              <button class="segment active" type="button" data-mode="easy">簡單</button>
-              <button class="segment" type="button" data-mode="hard">難</button>
-            </div>
-            <p class="rule-note" id="ruleNote">每格下方顯示提示：綠色位置正確，白色顏色正確但位置錯，黑色不在答案中。</p>
+      <section class="game-screen is-hidden" id="gameScreen" aria-label="Mastermind 遊戲">
+        <header class="game-header">
+          <button class="back-button" type="button" id="backHome" aria-label="回首頁">‹</button>
+          <div>
+            <p class="screen-kicker">Tom Clues Case 001</p>
+            <h1>Mastermind</h1>
           </div>
+          <div class="timer-card">
+            <span id="modeLabel">簡單規則</span>
+            <strong id="timer">00:00</strong>
+            <small id="bestTime">最佳 --:--</small>
+          </div>
+        </header>
 
-          <div class="panel-section">
-            <div class="section-row">
-              <h2>關卡</h2>
+        <section class="game-controls" aria-label="關卡與規則">
+          <div class="level-strip">
+            <button class="small-button" type="button" id="prevLevel" aria-label="上一關">‹</button>
+            <label>
               <span id="levelText">Lv. 001</span>
-            </div>
-            <input id="levelRange" type="range" min="1" max="100" value="1" />
-            <div class="level-actions">
-              <button class="small-button" type="button" id="prevLevel" aria-label="上一關">‹</button>
               <select id="levelSelect" aria-label="選擇關卡"></select>
-              <button class="small-button" type="button" id="nextLevel" aria-label="下一關">›</button>
-            </div>
+            </label>
+            <button class="small-button" type="button" id="nextLevel" aria-label="下一關">›</button>
           </div>
+          <input id="levelRange" type="range" min="1" max="100" value="1" aria-label="關卡滑桿" />
+          <div class="segmented" role="tablist" aria-label="選擇規則">
+            <button class="segment active" type="button" data-mode="easy">簡單</button>
+            <button class="segment" type="button" data-mode="hard">難</button>
+          </div>
+        </section>
 
-          <div class="panel-section">
-            <div class="section-row">
-              <h2>排行榜</h2>
-              <button class="text-button" type="button" id="clearRank">清除</button>
-            </div>
-            <ol class="ranking" id="ranking"></ol>
-          </div>
-        </aside>
+        <section class="palette-panel" aria-label="顏色選擇">
+          <div class="palette" id="palette"></div>
+        </section>
 
         <section class="machine" aria-label="遊戲盤">
-          <div class="machine-top">
-            <span class="light light-red"></span>
-            <span class="light light-green"></span>
-            <span class="light light-yellow"></span>
-          </div>
           <div class="board-wrap">
             <div class="board" id="board"></div>
           </div>
-          <div class="palette" id="palette" aria-label="顏色選擇"></div>
           <div class="machine-bottom">
             <div class="display" id="attemptDisplay">1/7</div>
             <button class="judge-button" type="button" id="judgeButton">判定</button>
@@ -73,29 +128,37 @@
           </div>
         </section>
 
-        <aside class="info-panel" aria-label="操作與提示說明">
-          <div class="panel-section">
-            <h2>鍵盤</h2>
-            <div class="key-grid">
-              <span>← →</span><p>選格子</p>
-              <span>↑ ↓</span><p>換顏色</p>
-              <span>Enter</span><p>判定</p>
-              <span>Space</span><p>判定</p>
+        <section class="details-grid">
+          <article class="panel-section">
+            <div class="section-row">
+              <h2>提示規則</h2>
             </div>
-          </div>
-          <div class="panel-section clue-card">
-            <h2>提示</h2>
+            <p class="rule-note" id="ruleNote">每格下方顯示提示：綠色位置正確，白色顏色正確但位置錯，黑色不在答案中。</p>
             <div class="clue-row"><span class="sample-line green"></span><p>顏色與位置都正確</p></div>
             <div class="clue-row"><span class="sample-line white"></span><p>顏色正確，位置錯誤</p></div>
             <div class="clue-row"><span class="sample-line black"></span><p>答案沒有此顏色</p></div>
-          </div>
-        </aside>
+          </article>
+
+          <article class="panel-section">
+            <div class="section-row">
+              <h2>本關排行</h2>
+              <button class="text-button" type="button" id="clearRank">清除</button>
+            </div>
+            <ol class="ranking" id="ranking"></ol>
+          </article>
+        </section>
+
+        <section class="keyboard-hint" aria-label="鍵盤操作">
+          <span>← → 選格</span>
+          <span>↑ ↓ 換色</span>
+          <span>Enter / Space 判定</span>
+        </section>
       </section>
     </main>
 
     <dialog id="resultDialog" class="result-dialog">
       <form method="dialog">
-        <p class="eyebrow" id="resultKicker">通關</p>
+        <p class="screen-kicker" id="resultKicker">通關</p>
         <h2 id="resultTitle">密碼已破譯</h2>
         <p id="resultDetail"></p>
         <div class="dialog-actions">
