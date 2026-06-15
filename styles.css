@@ -121,23 +121,11 @@ p {
   z-index: 1;
 }
 
-.rope {
-  position: absolute;
-  top: 0;
-  left: 52%;
-  width: 5px;
-  height: 54px;
-  transform: translateX(-50%);
-  background: #050505;
-  border-radius: 999px;
-}
-
 .spy {
   position: absolute;
-  top: 36px;
+  top: 0;
   left: 50%;
-  width: 220px;
-  color: #050505;
+  width: 180px;
   transform: translateX(-50%);
   transform-origin: 50% 0;
   animation: spyFloat 3.4s ease-in-out infinite;
@@ -823,11 +811,7 @@ p {
   }
 
   .spy {
-    width: 128px;
-  }
-
-  .rope {
-    height: 34px;
+    width: 118px;
   }
 
   .games-section {
