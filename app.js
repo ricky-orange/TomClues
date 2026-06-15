@@ -86,10 +86,10 @@ const wordsState = {
 };
 
 const slideSettings = {
-  easy: { label: "Easy", rows: 2, cols: 3, tiles: 4, blanks: 2, shuffle: 24 },
-  medium: { label: "Medium", rows: 3, cols: 3, tiles: 8, blanks: 1, shuffle: 70 },
-  hard: { label: "Hard", rows: 4, cols: 4, tiles: 12, blanks: 4, shuffle: 110 },
-  hell: { label: "Hell", rows: 4, cols: 4, tiles: 15, blanks: 1, shuffle: 150 },
+  easy: { label: "Easy", rows: 4, cols: 4, tiles: 4, shuffle: 24 },
+  medium: { label: "Medium", rows: 4, cols: 4, tiles: 8, shuffle: 70 },
+  hard: { label: "Hard", rows: 4, cols: 4, tiles: 12, shuffle: 110 },
+  hell: { label: "Hell", rows: 4, cols: 4, tiles: 15, shuffle: 150 },
 };
 
 const slideState = {
@@ -280,10 +280,15 @@ function currentSlideSettings() {
 }
 
 function createSolvedSlideBoard(settings) {
-  return [
-    ...Array.from({ length: settings.tiles }, (_, index) => index + 1),
-    ...Array(settings.rows * settings.cols - settings.tiles).fill(0),
-  ];
+  const board = Array(settings.rows * settings.cols).fill(null);
+  const emptyIndex = settings.tiles === 15 ? 15 : settings.tiles + 3;
+
+  for (let value = 1; value <= settings.tiles; value += 1) {
+    board[value - 1] = value;
+  }
+  board[emptyIndex] = 0;
+
+  return board;
 }
 
 function isSlideSolved(board, settings) {
@@ -921,10 +926,11 @@ function renderSlideBoard() {
   slideState.board.forEach((value, index) => {
     const tile = document.createElement("button");
     tile.type = "button";
-    tile.className = `slide-tile${value ? "" : " empty"}${movable.has(index) ? " movable" : ""}`;
+    const tileType = value === 0 ? " empty" : value === null ? " blank" : "";
+    tile.className = `slide-tile${tileType}${movable.has(index) ? " movable" : ""}`;
     tile.textContent = value ? String(value) : "";
     tile.disabled = !value || slideState.solved;
-    tile.setAttribute("aria-label", value ? `Slide tile ${value}` : "Empty space");
+    tile.setAttribute("aria-label", value ? `Slide tile ${value}` : value === 0 ? "Empty space" : "Blank block");
     tile.addEventListener("click", () => moveSlideTile(index));
     slideBoard.append(tile);
   });
@@ -946,8 +952,8 @@ function renderSlideMeta() {
   slidePracticeButton.classList.toggle("active", slideState.practice);
   slideShuffleButton.disabled = !slideState.practice;
   slideRuleNote.textContent = slideState.practice
-    ? `Free ${settings.label} board. Practice clears do not enter ranking.`
-    : `${settings.label} ranked level. Solve the board in order to record time and moves.`;
+    ? `Free ${settings.label} 4x4 board. Practice clears do not enter ranking.`
+    : `${settings.label} ranked 4x4 level. Only one empty space can move.`;
 
   document.querySelectorAll(".segment[data-slide-mode]").forEach((button) => {
     button.classList.toggle("active", button.dataset.slideMode === slideState.mode);

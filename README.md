@@ -10,7 +10,7 @@ Tom Clues is a mini game collection website / app prototype. The playable games 
 - Mastermind game screen with Easy and Hard clue modes.
 - Bulls & Cows game screen with 4-digit A/B clues.
 - Word Clues game screen with Easy, Normal, and Hard word lengths.
-- Sliding Puzzle game screen with Easy, Medium, Hard, Hell, and unranked Practice.
+- Sliding Puzzle game screen with fixed 4x4 boards, Easy, Medium, Hard, Hell, and unranked Practice.
 - 100 levels, 7-move limit, timer, and per-level local ranking.
 - 100 Bulls & Cows levels, 10-guess limit, timer, and per-level local ranking.
 - 50 Word Clues levels per difficulty, timer, and per-level local ranking.
