@@ -65,14 +65,15 @@ p {
   padding: max(18px, env(safe-area-inset-top)) 18px max(22px, env(safe-area-inset-bottom));
 }
 
-.home-header {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) 64px;
-  align-items: center;
-  gap: 14px;
+.home-screen {
+  position: relative;
 }
 
-.icon-button,
+.home-header {
+  display: flex;
+  justify-content: center;
+}
+
 .back-button,
 .small-button {
   border: 5px solid var(--line);
@@ -82,49 +83,12 @@ p {
   box-shadow: 0 7px 0 rgba(39, 49, 58, 0.2);
 }
 
-.icon-button {
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-}
-
-.gear-icon {
-  position: relative;
-  width: 34px;
-  height: 34px;
-  border: 9px solid white;
-  border-radius: 50%;
-}
-
-.gear-icon::before {
-  content: "";
-  position: absolute;
-  inset: -17px;
-  background: conic-gradient(from 0deg, white 0 10deg, transparent 10deg 35deg, white 35deg 45deg, transparent 45deg 80deg, white 80deg 90deg, transparent 90deg 125deg, white 125deg 135deg, transparent 135deg 170deg, white 170deg 180deg, transparent 180deg 215deg, white 215deg 225deg, transparent 225deg 260deg, white 260deg 270deg, transparent 270deg 305deg, white 305deg 315deg, transparent 315deg 360deg);
-  border-radius: 50%;
-  z-index: -1;
-}
-
-.flag-button span {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 32px;
-  border: 4px solid white;
-  border-radius: 8px;
-  background: var(--red);
-  font-weight: 1000;
-  font-size: 0.9rem;
-}
-
 .brand-sign {
-  display: grid;
-  grid-template-columns: 42px 1fr 42px;
-  align-items: center;
+  width: min(720px, 100%);
   min-height: 74px;
   padding: 8px 12px;
   border: 5px solid var(--line);
+  border-radius: 4px;
   background: #4f4a73;
   color: white;
   text-align: center;
@@ -146,24 +110,23 @@ p {
   letter-spacing: 0;
 }
 
-.star {
-  font-size: 2.1rem;
-  line-height: 1;
-}
-
 .spy-scene {
-  position: relative;
-  height: 180px;
-  margin-top: -2px;
-  overflow: hidden;
+  position: absolute;
+  top: 80px;
+  right: 22px;
+  width: 230px;
+  height: 150px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .rope {
   position: absolute;
   top: 0;
-  left: 50%;
-  width: 7px;
-  height: 82px;
+  left: 52%;
+  width: 5px;
+  height: 54px;
   transform: translateX(-50%);
   background: #050505;
   border-radius: 999px;
@@ -171,9 +134,9 @@ p {
 
 .spy {
   position: absolute;
-  top: 54px;
+  top: 36px;
   left: 50%;
-  width: min(360px, 92vw);
+  width: 220px;
   color: #050505;
   transform: translateX(-50%);
   transform-origin: 50% 0;
@@ -191,7 +154,9 @@ p {
 }
 
 .games-section {
-  margin-top: 10px;
+  position: relative;
+  z-index: 2;
+  margin-top: 126px;
 }
 
 .section-title {
@@ -838,19 +803,11 @@ p {
   }
 
   .home-header {
-    grid-template-columns: 54px minmax(0, 1fr) 54px;
-    gap: 8px;
-  }
-
-  .icon-button {
-    width: 54px;
-    height: 54px;
-    border-width: 4px;
+    display: flex;
   }
 
   .brand-sign {
     min-height: 62px;
-    grid-template-columns: 30px 1fr 30px;
     border-width: 4px;
   }
 
@@ -858,16 +815,23 @@ p {
     font-size: clamp(1.65rem, 8vw, 2.6rem);
   }
 
-  .star {
-    font-size: 1.55rem;
-  }
-
   .spy-scene {
-    height: 150px;
+    top: 60px;
+    right: 6px;
+    width: 128px;
+    height: 96px;
   }
 
   .spy {
-    width: min(310px, 92vw);
+    width: 128px;
+  }
+
+  .rope {
+    height: 34px;
+  }
+
+  .games-section {
+    margin-top: 92px;
   }
 
   .section-title {
