@@ -56,12 +56,12 @@
               <span class="game-badge">PLAY</span>
             </button>
 
-            <button class="game-card number-card" type="button" disabled>
+            <button class="game-card number-card" type="button" data-open-game="slide">
               <span class="game-art number-art" aria-hidden="true">
-                <i>7</i><b>3</b><em>9</em>
+                <i>15</i><b>8</b><em>4</em>
               </span>
-              <span class="game-title">NUMBER<br />RUN</span>
-              <span class="game-badge">SOON</span>
+              <span class="game-title">SLIDING<br />PUZZLE</span>
+              <span class="game-badge">PLAY</span>
             </button>
           </div>
         </section>
@@ -274,6 +274,77 @@
           <span>A-Z: enter letter</span>
           <span>Backspace: erase</span>
           <span>Enter: check</span>
+        </section>
+      </section>
+
+      <section class="game-screen is-hidden" id="slideScreen" aria-label="Sliding Puzzle game">
+        <header class="game-header">
+          <button class="back-button" type="button" id="slideBackHome" aria-label="Back to home">&lt;</button>
+          <div>
+            <p class="screen-kicker">Tom Clues Case 004</p>
+            <h1>Sliding Puzzle</h1>
+          </div>
+          <div class="timer-card">
+            <span id="slideModeLabel">Easy</span>
+            <strong id="slideTimer">00:00</strong>
+            <small id="slideBestTime">Best --:--</small>
+          </div>
+        </header>
+
+        <section class="game-controls" aria-label="Sliding Puzzle level and difficulty">
+          <div class="level-strip">
+            <button class="small-button" type="button" id="slidePrevLevel" aria-label="Previous level">&lt;</button>
+            <label>
+              <span id="slideLevelText">Lv. 001</span>
+              <select id="slideLevelSelect" aria-label="Select level"></select>
+            </label>
+            <button class="small-button" type="button" id="slideNextLevel" aria-label="Next level">&gt;</button>
+          </div>
+          <input id="slideLevelRange" type="range" min="1" max="25" value="1" aria-label="Level slider" />
+          <div class="segmented segmented-four" role="tablist" aria-label="Select difficulty">
+            <button class="segment active" type="button" data-slide-mode="easy">Easy</button>
+            <button class="segment" type="button" data-slide-mode="medium">Medium</button>
+            <button class="segment" type="button" data-slide-mode="hard">Hard</button>
+            <button class="segment" type="button" data-slide-mode="hell">Hell</button>
+          </div>
+          <button class="practice-button" type="button" id="slidePracticeButton">Practice Off</button>
+        </section>
+
+        <section class="machine slide-machine" aria-label="Sliding Puzzle board">
+          <div class="slide-board-wrap">
+            <div class="slide-board" id="slideBoard"></div>
+          </div>
+          <div class="machine-bottom">
+            <div class="display" id="slideMoveDisplay">0</div>
+            <button class="judge-button" type="button" id="slideShuffleButton">New</button>
+            <button class="reset-button" type="button" id="slideResetButton">Reset</button>
+          </div>
+        </section>
+
+        <section class="details-grid">
+          <article class="panel-section">
+            <div class="section-row">
+              <h2>Rules</h2>
+            </div>
+            <p class="rule-note" id="slideRuleNote">Slide tiles into empty spaces until the numbers are back in order.</p>
+            <div class="clue-row"><span class="ab-sample">1</span><p>Tap a tile next to an empty space</p></div>
+            <div class="clue-row"><span class="ab-sample">25</span><p>Each difficulty has 25 ranked levels</p></div>
+            <div class="clue-row"><span class="ab-sample">P</span><p>Practice creates free boards without ranking</p></div>
+          </article>
+
+          <article class="panel-section">
+            <div class="section-row">
+              <h2>Level Ranking</h2>
+              <button class="text-button" type="button" id="slideClearRank">Clear</button>
+            </div>
+            <ol class="ranking" id="slideRanking"></ol>
+          </article>
+        </section>
+
+        <section class="keyboard-hint" aria-label="Keyboard controls">
+          <span>Click / Tap: slide tile</span>
+          <span>Arrow keys: move a tile</span>
+          <span>New: practice board</span>
         </section>
       </section>
     </main>

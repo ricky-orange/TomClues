@@ -85,9 +85,30 @@ const wordsState = {
   solved: false,
 };
 
+const slideSettings = {
+  easy: { label: "Easy", rows: 2, cols: 3, tiles: 4, blanks: 2, shuffle: 24 },
+  medium: { label: "Medium", rows: 3, cols: 3, tiles: 8, blanks: 1, shuffle: 70 },
+  hard: { label: "Hard", rows: 4, cols: 4, tiles: 12, blanks: 4, shuffle: 110 },
+  hell: { label: "Hell", rows: 4, cols: 4, tiles: 15, blanks: 1, shuffle: 150 },
+};
+
+const slideState = {
+  mode: "easy",
+  level: 1,
+  practice: false,
+  practiceSeed: 1,
+  board: [],
+  startedAt: 0,
+  elapsedMs: 0,
+  timerId: 0,
+  moves: 0,
+  solved: false,
+};
+
 const homeScreen = document.querySelector("#homeScreen");
 const gameScreen = document.querySelector("#gameScreen");
 const bullsScreen = document.querySelector("#bullsScreen");
+const slideScreen = document.querySelector("#slideScreen");
 const board = document.querySelector("#board");
 const paletteEl = document.querySelector("#palette");
 const timerEl = document.querySelector("#timer");
@@ -125,6 +146,18 @@ const wordsKeyboard = document.querySelector("#wordsKeyboard");
 const wordsAttemptDisplay = document.querySelector("#wordsAttemptDisplay");
 const wordsRankingEl = document.querySelector("#wordsRanking");
 const wordsRuleNote = document.querySelector("#wordsRuleNote");
+const slideModeLabel = document.querySelector("#slideModeLabel");
+const slideTimerEl = document.querySelector("#slideTimer");
+const slideBestTimeEl = document.querySelector("#slideBestTime");
+const slideLevelRange = document.querySelector("#slideLevelRange");
+const slideLevelSelect = document.querySelector("#slideLevelSelect");
+const slideLevelText = document.querySelector("#slideLevelText");
+const slideBoard = document.querySelector("#slideBoard");
+const slideMoveDisplay = document.querySelector("#slideMoveDisplay");
+const slideRankingEl = document.querySelector("#slideRanking");
+const slideRuleNote = document.querySelector("#slideRuleNote");
+const slidePracticeButton = document.querySelector("#slidePracticeButton");
+const slideShuffleButton = document.querySelector("#slideShuffleButton");
 
 let activeDialogGame = "mastermind";
 
@@ -149,6 +182,10 @@ function bullsStorageKey() {
 
 function wordsStorageKey() {
   return `tom-clues:word-clues:${wordsState.mode}:level:${wordsState.level}`;
+}
+
+function slideStorageKey() {
+  return `tom-clues:sliding-puzzle:${slideState.mode}:level:${slideState.level}`;
 }
 
 function getRanks() {
@@ -185,6 +222,18 @@ function getWordsRanks() {
 
 function setWordsRanks(ranks) {
   localStorage.setItem(wordsStorageKey(), JSON.stringify(ranks.slice(0, 10)));
+}
+
+function getSlideRanks() {
+  try {
+    return JSON.parse(localStorage.getItem(slideStorageKey()) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function setSlideRanks(ranks) {
+  localStorage.setItem(slideStorageKey(), JSON.stringify(ranks.slice(0, 10)));
 }
 
 function seededRandom(seed) {
@@ -224,6 +273,80 @@ function generateBullsAnswer(level) {
 
 function getWordAnswer(mode, level) {
   return wordLists[mode][level - 1];
+}
+
+function currentSlideSettings() {
+  return slideSettings[slideState.mode];
+}
+
+function createSolvedSlideBoard(settings) {
+  return [
+    ...Array.from({ length: settings.tiles }, (_, index) => index + 1),
+    ...Array(settings.rows * settings.cols - settings.tiles).fill(0),
+  ];
+}
+
+function isSlideSolved(board, settings) {
+  const solved = createSolvedSlideBoard(settings);
+  return board.every((value, index) => value === solved[index]);
+}
+
+function getSlideNeighbors(index, settings) {
+  const row = Math.floor(index / settings.cols);
+  const col = index % settings.cols;
+  const neighbors = [];
+
+  if (row > 0) neighbors.push(index - settings.cols);
+  if (row < settings.rows - 1) neighbors.push(index + settings.cols);
+  if (col > 0) neighbors.push(index - 1);
+  if (col < settings.cols - 1) neighbors.push(index + 1);
+
+  return neighbors;
+}
+
+function getAdjacentSlideEmpty(index, board, settings) {
+  return getSlideNeighbors(index, settings).find((neighbor) => board[neighbor] === 0);
+}
+
+function getSlideMovableIndexes(board, settings) {
+  return board
+    .map((value, index) => (value && getAdjacentSlideEmpty(index, board, settings) !== undefined ? index : -1))
+    .filter((index) => index >= 0);
+}
+
+function swapSlideCells(board, from, to) {
+  const next = [...board];
+  [next[from], next[to]] = [next[to], next[from]];
+  return next;
+}
+
+function generateSlideBoard(mode, level, seedOffset = 0) {
+  const settings = slideSettings[mode];
+  const random = seededRandom(
+    level * 1301081
+      + settings.tiles * 104729
+      + settings.rows * 8191
+      + seedOffset * 49999,
+  );
+  let board = createSolvedSlideBoard(settings);
+  let previous = "";
+
+  for (let step = 0; step < settings.shuffle; step += 1) {
+    const movable = getSlideMovableIndexes(board, settings);
+    const candidates = movable.filter((index) => String(index) !== previous);
+    const pool = candidates.length ? candidates : movable;
+    const tileIndex = pool[Math.floor(random() * pool.length)];
+    const emptyIndex = getAdjacentSlideEmpty(tileIndex, board, settings);
+    previous = String(emptyIndex);
+    board = swapSlideCells(board, tileIndex, emptyIndex);
+  }
+
+  if (isSlideSolved(board, settings)) {
+    const tileIndex = getSlideMovableIndexes(board, settings)[0];
+    board = swapSlideCells(board, tileIndex, getAdjacentSlideEmpty(tileIndex, board, settings));
+  }
+
+  return board;
 }
 
 function evaluateGuess(guess, answer) {
@@ -298,12 +421,14 @@ function showScreen(screen) {
   gameScreen.classList.toggle("is-hidden", screen !== "mastermind");
   bullsScreen.classList.toggle("is-hidden", screen !== "bulls");
   wordsScreen.classList.toggle("is-hidden", screen !== "words");
+  slideScreen.classList.toggle("is-hidden", screen !== "slide");
   document.body.classList.toggle("in-game", screen !== "home");
 
   if (screen === "home") {
     stopTimer();
     stopBullsTimer();
     stopWordsTimer();
+    stopSlideTimer();
     if (resultDialog.open) resultDialog.close();
   }
 }
@@ -332,6 +457,15 @@ function ensureWordsTimer() {
   wordsState.timerId = window.setInterval(() => {
     wordsState.elapsedMs = Date.now() - wordsState.startedAt;
     wordsTimerEl.textContent = formatTime(wordsState.elapsedMs);
+  }, 250);
+}
+
+function ensureSlideTimer() {
+  if (slideState.startedAt || slideState.solved || state.screen !== "slide") return;
+  slideState.startedAt = Date.now() - slideState.elapsedMs;
+  slideState.timerId = window.setInterval(() => {
+    slideState.elapsedMs = Date.now() - slideState.startedAt;
+    slideTimerEl.textContent = formatTime(slideState.elapsedMs);
   }, 250);
 }
 
@@ -368,6 +502,17 @@ function stopWordsTimer() {
   wordsTimerEl.textContent = formatTime(wordsState.elapsedMs);
 }
 
+function stopSlideTimer() {
+  if (slideState.timerId) {
+    clearInterval(slideState.timerId);
+    slideState.timerId = 0;
+  }
+  if (slideState.startedAt) {
+    slideState.elapsedMs = Date.now() - slideState.startedAt;
+  }
+  slideTimerEl.textContent = formatTime(slideState.elapsedMs);
+}
+
 function updateBestTime() {
   const best = getRanks()[0];
   bestTimeEl.textContent = best ? `Best ${formatTime(best.time)}` : "Best --:--";
@@ -383,10 +528,21 @@ function updateWordsBestTime() {
   wordsBestTimeEl.textContent = best ? `Best ${formatTime(best.time)}` : "Best --:--";
 }
 
+function updateSlideBestTime() {
+  if (slideState.practice) {
+    slideBestTimeEl.textContent = "Practice";
+    return;
+  }
+
+  const best = getSlideRanks()[0];
+  slideBestTimeEl.textContent = best ? `Best ${formatTime(best.time)}` : "Best --:--";
+}
+
 function renderLevelOptions() {
   levelSelect.innerHTML = "";
   bullsLevelSelect.innerHTML = "";
   wordsLevelSelect.innerHTML = "";
+  slideLevelSelect.innerHTML = "";
   for (let level = 1; level <= 100; level += 1) {
     const option = document.createElement("option");
     option.value = String(level);
@@ -404,6 +560,13 @@ function renderLevelOptions() {
     wordsOption.value = String(level);
     wordsOption.textContent = `Lv. ${String(level).padStart(3, "0")}`;
     wordsLevelSelect.append(wordsOption);
+  }
+
+  for (let level = 1; level <= 25; level += 1) {
+    const slideOption = document.createElement("option");
+    slideOption.value = String(level);
+    slideOption.textContent = `Lv. ${String(level).padStart(3, "0")}`;
+    slideLevelSelect.append(slideOption);
   }
 }
 
@@ -544,6 +707,33 @@ function renderWordsRanks() {
     const item = document.createElement("li");
     item.innerHTML = `<strong>${formatTime(rank.time)}</strong> / ${formatMoves(rank.moves)}`;
     wordsRankingEl.append(item);
+  });
+}
+
+function renderSlideRanks() {
+  slideRankingEl.innerHTML = "";
+
+  if (slideState.practice) {
+    const practice = document.createElement("li");
+    practice.className = "empty-rank";
+    practice.textContent = "Practice mode does not record ranking";
+    slideRankingEl.append(practice);
+    return;
+  }
+
+  const ranks = getSlideRanks();
+  if (!ranks.length) {
+    const empty = document.createElement("li");
+    empty.className = "empty-rank";
+    empty.textContent = "No clears on this level yet";
+    slideRankingEl.append(empty);
+    return;
+  }
+
+  ranks.forEach((rank) => {
+    const item = document.createElement("li");
+    item.innerHTML = `<strong>${formatTime(rank.time)}</strong> / ${formatMoves(rank.moves)}`;
+    slideRankingEl.append(item);
   });
 }
 
@@ -722,6 +912,48 @@ function renderWordsMeta() {
   });
 }
 
+function renderSlideBoard() {
+  const settings = currentSlideSettings();
+  const movable = new Set(getSlideMovableIndexes(slideState.board, settings));
+  slideBoard.innerHTML = "";
+  slideBoard.style.gridTemplateColumns = `repeat(${settings.cols}, minmax(0, 1fr))`;
+
+  slideState.board.forEach((value, index) => {
+    const tile = document.createElement("button");
+    tile.type = "button";
+    tile.className = `slide-tile${value ? "" : " empty"}${movable.has(index) ? " movable" : ""}`;
+    tile.textContent = value ? String(value) : "";
+    tile.disabled = !value || slideState.solved;
+    tile.setAttribute("aria-label", value ? `Slide tile ${value}` : "Empty space");
+    tile.addEventListener("click", () => moveSlideTile(index));
+    slideBoard.append(tile);
+  });
+}
+
+function renderSlideMeta() {
+  const settings = currentSlideSettings();
+  const levelName = slideState.practice ? "Practice" : `Lv. ${String(slideState.level).padStart(3, "0")}`;
+  slideLevelText.textContent = levelName;
+  slideLevelRange.value = String(slideState.level);
+  slideLevelSelect.value = String(slideState.level);
+  slideLevelRange.disabled = slideState.practice;
+  slideLevelSelect.disabled = slideState.practice;
+  document.querySelector("#slidePrevLevel").disabled = slideState.practice;
+  document.querySelector("#slideNextLevel").disabled = slideState.practice;
+  slideMoveDisplay.textContent = slideState.solved ? "OK" : String(slideState.moves);
+  slideModeLabel.textContent = settings.label;
+  slidePracticeButton.textContent = slideState.practice ? "Practice On" : "Practice Off";
+  slidePracticeButton.classList.toggle("active", slideState.practice);
+  slideShuffleButton.disabled = !slideState.practice;
+  slideRuleNote.textContent = slideState.practice
+    ? `Free ${settings.label} board. Practice clears do not enter ranking.`
+    : `${settings.label} ranked level. Solve the board in order to record time and moves.`;
+
+  document.querySelectorAll(".segment[data-slide-mode]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.slideMode === slideState.mode);
+  });
+}
+
 function render() {
   renderPalette();
   renderBoard();
@@ -745,6 +977,13 @@ function renderWords() {
   renderWordsRanks();
   renderWordsMeta();
   updateWordsBestTime();
+}
+
+function renderSlide() {
+  renderSlideBoard();
+  renderSlideRanks();
+  renderSlideMeta();
+  updateSlideBestTime();
 }
 
 function setCurrentSlotColor(colorIndex) {
@@ -888,6 +1127,51 @@ function submitWordGuess() {
   renderWords();
 }
 
+function moveSlideTile(index) {
+  const settings = currentSlideSettings();
+  if (slideState.solved || state.screen !== "slide") return;
+
+  const emptyIndex = getAdjacentSlideEmpty(index, slideState.board, settings);
+  if (emptyIndex === undefined) return;
+
+  ensureSlideTimer();
+  slideState.board = swapSlideCells(slideState.board, index, emptyIndex);
+  slideState.moves += 1;
+
+  if (isSlideSolved(slideState.board, settings)) {
+    winSlideGame();
+    return;
+  }
+
+  renderSlide();
+}
+
+function moveSlideByKey(key) {
+  const settings = currentSlideSettings();
+  if (slideState.solved || state.screen !== "slide") return;
+
+  const emptyIndexes = slideState.board
+    .map((value, index) => (value === 0 ? index : -1))
+    .filter((index) => index >= 0);
+  const offsets = {
+    ArrowUp: settings.cols,
+    ArrowDown: -settings.cols,
+    ArrowLeft: 1,
+    ArrowRight: -1,
+  };
+  const offset = offsets[key];
+  const emptyIndex = emptyIndexes.find((candidate) => {
+    const tileIndex = candidate + offset;
+    if (tileIndex < 0 || tileIndex >= slideState.board.length) return false;
+    if (key === "ArrowLeft" && Math.floor(candidate / settings.cols) !== Math.floor(tileIndex / settings.cols)) return false;
+    if (key === "ArrowRight" && Math.floor(candidate / settings.cols) !== Math.floor(tileIndex / settings.cols)) return false;
+    return slideState.board[tileIndex] !== 0;
+  });
+
+  if (emptyIndex === undefined) return;
+  moveSlideTile(emptyIndex + offset);
+}
+
 function flashBullsAttempt(text) {
   const original = bullsAttemptDisplay.textContent;
   bullsAttemptDisplay.textContent = text;
@@ -984,6 +1268,26 @@ function loseWordsGame() {
   renderWords();
 }
 
+function winSlideGame() {
+  activeDialogGame = "slide";
+  slideState.solved = true;
+  stopSlideTimer();
+
+  if (!slideState.practice) {
+    const ranks = getSlideRanks();
+    ranks.push({
+      time: slideState.elapsedMs,
+      moves: slideState.moves,
+      date: new Date().toISOString(),
+    });
+    ranks.sort((a, b) => a.time - b.time || a.moves - b.moves);
+    setSlideRanks(ranks);
+  }
+
+  showSlideResult();
+  renderSlide();
+}
+
 function showResult(won) {
   const answerText = state.answer.map((index) => palette[index].name).join(", ");
   resultKicker.textContent = won ? "Solved" : "Case Failed";
@@ -1017,6 +1321,18 @@ function showWordsResult(won) {
   resultDetail.textContent = won
     ? `${formatTime(wordsState.elapsedMs)}, solved in ${formatMoves(wordsState.activeRow + 1)}.`
     : `The answer was ${answerText}. Reset keeps the same level answer.`;
+
+  if (typeof resultDialog.showModal === "function") {
+    resultDialog.showModal();
+  }
+}
+
+function showSlideResult() {
+  resultKicker.textContent = slideState.practice ? "Practice Clear" : "Solved";
+  resultTitle.textContent = "Puzzle Solved";
+  resultDetail.textContent = slideState.practice
+    ? `${formatTime(slideState.elapsedMs)}, ${formatMoves(slideState.moves)}. Practice clears are not ranked.`
+    : `${formatTime(slideState.elapsedMs)}, solved in ${formatMoves(slideState.moves)}.`;
 
   if (typeof resultDialog.showModal === "function") {
     resultDialog.showModal();
@@ -1066,6 +1382,22 @@ function resetWordsGame({ keepElapsed = false } = {}) {
   renderWords();
 }
 
+function resetSlideGame({ keepElapsed = false, newPractice = false } = {}) {
+  stopSlideTimer();
+  if (newPractice) {
+    slideState.practiceSeed += 1;
+  }
+  const seedOffset = slideState.practice ? slideState.practiceSeed : 0;
+  slideState.board = generateSlideBoard(slideState.mode, slideState.level, seedOffset);
+  slideState.startedAt = 0;
+  slideState.elapsedMs = keepElapsed ? slideState.elapsedMs : 0;
+  slideState.timerId = 0;
+  slideState.moves = 0;
+  slideState.solved = false;
+  slideTimerEl.textContent = formatTime(slideState.elapsedMs);
+  renderSlide();
+}
+
 function setLevel(level) {
   state.level = Math.min(100, Math.max(1, Number(level)));
   resetGame();
@@ -1081,6 +1413,11 @@ function setWordsLevel(level) {
   resetWordsGame();
 }
 
+function setSlideLevel(level) {
+  slideState.level = Math.min(25, Math.max(1, Number(level)));
+  resetSlideGame();
+}
+
 function setMode(mode) {
   state.mode = mode;
   resetGame();
@@ -1089,6 +1426,16 @@ function setMode(mode) {
 function setWordsMode(mode) {
   wordsState.mode = mode;
   resetWordsGame();
+}
+
+function setSlideMode(mode) {
+  slideState.mode = mode;
+  resetSlideGame({ newPractice: slideState.practice });
+}
+
+function toggleSlidePractice() {
+  slideState.practice = !slideState.practice;
+  resetSlideGame({ newPractice: slideState.practice });
 }
 
 function clearRank() {
@@ -1104,6 +1451,12 @@ function clearBullsRank() {
 function clearWordsRank() {
   localStorage.removeItem(wordsStorageKey());
   renderWords();
+}
+
+function clearSlideRank() {
+  if (slideState.practice) return;
+  localStorage.removeItem(slideStorageKey());
+  renderSlide();
 }
 
 function bindEvents() {
@@ -1122,9 +1475,15 @@ function bindEvents() {
     renderWords();
   });
 
+  document.querySelector("[data-open-game='slide']").addEventListener("click", () => {
+    showScreen("slide");
+    renderSlide();
+  });
+
   document.querySelector("#backHome").addEventListener("click", () => showScreen("home"));
   document.querySelector("#bullsBackHome").addEventListener("click", () => showScreen("home"));
   document.querySelector("#wordsBackHome").addEventListener("click", () => showScreen("home"));
+  document.querySelector("#slideBackHome").addEventListener("click", () => showScreen("home"));
 
   document.querySelectorAll(".segment[data-mode]").forEach((button) => {
     button.addEventListener("click", () => setMode(button.dataset.mode));
@@ -1132,6 +1491,10 @@ function bindEvents() {
 
   document.querySelectorAll(".segment[data-word-mode]").forEach((button) => {
     button.addEventListener("click", () => setWordsMode(button.dataset.wordMode));
+  });
+
+  document.querySelectorAll(".segment[data-slide-mode]").forEach((button) => {
+    button.addEventListener("click", () => setSlideMode(button.dataset.slideMode));
   });
 
   levelRange.addEventListener("input", (event) => setLevel(event.target.value));
@@ -1155,12 +1518,22 @@ function bindEvents() {
   document.querySelector("#wordsEnterButton").addEventListener("click", submitWordGuess);
   document.querySelector("#wordsResetButton").addEventListener("click", () => resetWordsGame());
   document.querySelector("#wordsClearRank").addEventListener("click", clearWordsRank);
+  slideLevelRange.addEventListener("input", (event) => setSlideLevel(event.target.value));
+  slideLevelSelect.addEventListener("change", (event) => setSlideLevel(event.target.value));
+  document.querySelector("#slidePrevLevel").addEventListener("click", () => setSlideLevel(slideState.level - 1));
+  document.querySelector("#slideNextLevel").addEventListener("click", () => setSlideLevel(slideState.level + 1));
+  document.querySelector("#slideResetButton").addEventListener("click", () => resetSlideGame());
+  document.querySelector("#slideShuffleButton").addEventListener("click", () => resetSlideGame({ newPractice: slideState.practice }));
+  document.querySelector("#slideClearRank").addEventListener("click", clearSlideRank);
+  slidePracticeButton.addEventListener("click", toggleSlidePractice);
   document.querySelector("#dialogReplay").addEventListener("click", () => {
     resultDialog.close();
     if (activeDialogGame === "bulls") {
       resetBullsGame();
     } else if (activeDialogGame === "words") {
       resetWordsGame();
+    } else if (activeDialogGame === "slide") {
+      resetSlideGame({ newPractice: slideState.practice });
     } else {
       resetGame();
     }
@@ -1171,6 +1544,12 @@ function bindEvents() {
       setBullsLevel(bullsState.level === 100 ? 1 : bullsState.level + 1);
     } else if (activeDialogGame === "words") {
       setWordsLevel(wordsState.level === 50 ? 1 : wordsState.level + 1);
+    } else if (activeDialogGame === "slide") {
+      if (slideState.practice) {
+        resetSlideGame({ newPractice: true });
+      } else {
+        setSlideLevel(slideState.level === 25 ? 1 : slideState.level + 1);
+      }
     } else {
       setLevel(state.level === 100 ? 1 : state.level + 1);
     }
@@ -1213,6 +1592,10 @@ function bindEvents() {
       if (event.key === "Backspace" || event.key === "Delete") removeWordLetter();
       if (event.key === "Enter") submitWordGuess();
     }
+
+    if (state.screen === "slide") {
+      if (event.key.startsWith("Arrow")) moveSlideByKey(event.key);
+    }
   });
 }
 
@@ -1221,4 +1604,5 @@ bindEvents();
 resetGame();
 resetBullsGame();
 resetWordsGame();
+resetSlideGame();
 showScreen("home");
