@@ -280,15 +280,11 @@ function currentSlideSettings() {
 }
 
 function createSolvedSlideBoard(settings) {
-  const board = Array(settings.rows * settings.cols).fill(null);
-  const emptyIndex = settings.tiles === 15 ? 15 : settings.tiles + 3;
-
-  for (let value = 1; value <= settings.tiles; value += 1) {
-    board[value - 1] = value;
-  }
-  board[emptyIndex] = 0;
-
-  return board;
+  return [
+    ...Array.from({ length: settings.tiles }, (_, index) => index + 1),
+    ...Array(settings.rows * settings.cols - settings.tiles - 1).fill(-1),
+    0,
+  ];
 }
 
 function isSlideSolved(board, settings) {
@@ -315,7 +311,7 @@ function getAdjacentSlideEmpty(index, board, settings) {
 
 function getSlideMovableIndexes(board, settings) {
   return board
-    .map((value, index) => (value && getAdjacentSlideEmpty(index, board, settings) !== undefined ? index : -1))
+    .map((value, index) => (value !== 0 && getAdjacentSlideEmpty(index, board, settings) !== undefined ? index : -1))
     .filter((index) => index >= 0);
 }
 
@@ -926,11 +922,11 @@ function renderSlideBoard() {
   slideState.board.forEach((value, index) => {
     const tile = document.createElement("button");
     tile.type = "button";
-    const tileType = value === 0 ? " empty" : value === null ? " blank" : "";
+    const tileType = value === 0 ? " empty" : value < 0 ? " blank" : "";
     tile.className = `slide-tile${tileType}${movable.has(index) ? " movable" : ""}`;
-    tile.textContent = value ? String(value) : "";
-    tile.disabled = !value || slideState.solved;
-    tile.setAttribute("aria-label", value ? `Slide tile ${value}` : value === 0 ? "Empty space" : "Blank block");
+    tile.textContent = value > 0 ? String(value) : "";
+    tile.disabled = value === 0 || slideState.solved;
+    tile.setAttribute("aria-label", value > 0 ? `Slide tile ${value}` : value === 0 ? "Empty space" : "Blank tile");
     tile.addEventListener("click", () => moveSlideTile(index));
     slideBoard.append(tile);
   });
