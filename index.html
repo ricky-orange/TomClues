@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,21 +10,21 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="home-screen" id="homeScreen" aria-label="Tom Clues 首頁">
+      <section class="home-screen" id="homeScreen" aria-label="Tom Clues home">
         <header class="home-header">
-          <button class="icon-button" type="button" aria-label="設定">
+          <button class="icon-button" type="button" aria-label="Settings">
             <span class="gear-icon" aria-hidden="true"></span>
           </button>
           <div class="brand-sign">
-            <span class="star" aria-hidden="true">★</span>
+            <span class="star" aria-hidden="true">*</span>
             <div>
               <p>Tom Clues</p>
               <strong>Mini Game Lab</strong>
             </div>
-            <span class="star" aria-hidden="true">★</span>
+            <span class="star" aria-hidden="true">*</span>
           </div>
-          <button class="icon-button flag-button" type="button" aria-label="語言">
-            <span>TW</span>
+          <button class="icon-button flag-button" type="button" aria-label="Language">
+            <span>EN</span>
           </button>
         </header>
 
@@ -44,7 +44,7 @@
         <section class="games-section">
           <div class="section-title">
             <h1>Choose a Case</h1>
-            <p>明亮、短局、可離線的小遊戲集合。</p>
+            <p>Bright, quick, offline-friendly mini games for short breaks.</p>
           </div>
           <div class="game-grid">
             <button class="game-card mastermind-card" type="button" data-open-game="mastermind">
@@ -83,87 +83,87 @@
         </section>
       </section>
 
-      <section class="game-screen is-hidden" id="gameScreen" aria-label="Mastermind 遊戲">
+      <section class="game-screen is-hidden" id="gameScreen" aria-label="Mastermind game">
         <header class="game-header">
-          <button class="back-button" type="button" id="backHome" aria-label="回首頁">‹</button>
+          <button class="back-button" type="button" id="backHome" aria-label="Back to home">&lt;</button>
           <div>
             <p class="screen-kicker">Tom Clues Case 001</p>
             <h1>Mastermind</h1>
           </div>
           <div class="timer-card">
-            <span id="modeLabel">簡單規則</span>
+            <span id="modeLabel">Easy Rules</span>
             <strong id="timer">00:00</strong>
-            <small id="bestTime">最佳 --:--</small>
+            <small id="bestTime">Best --:--</small>
           </div>
         </header>
 
-        <section class="game-controls" aria-label="關卡與規則">
+        <section class="game-controls" aria-label="Level and rules">
           <div class="level-strip">
-            <button class="small-button" type="button" id="prevLevel" aria-label="上一關">‹</button>
+            <button class="small-button" type="button" id="prevLevel" aria-label="Previous level">&lt;</button>
             <label>
               <span id="levelText">Lv. 001</span>
-              <select id="levelSelect" aria-label="選擇關卡"></select>
+              <select id="levelSelect" aria-label="Select level"></select>
             </label>
-            <button class="small-button" type="button" id="nextLevel" aria-label="下一關">›</button>
+            <button class="small-button" type="button" id="nextLevel" aria-label="Next level">&gt;</button>
           </div>
-          <input id="levelRange" type="range" min="1" max="100" value="1" aria-label="關卡滑桿" />
-          <div class="segmented" role="tablist" aria-label="選擇規則">
-            <button class="segment active" type="button" data-mode="easy">簡單</button>
-            <button class="segment" type="button" data-mode="hard">難</button>
+          <input id="levelRange" type="range" min="1" max="100" value="1" aria-label="Level slider" />
+          <div class="segmented" role="tablist" aria-label="Select rules">
+            <button class="segment active" type="button" data-mode="easy">Easy</button>
+            <button class="segment" type="button" data-mode="hard">Hard</button>
           </div>
         </section>
 
-        <section class="palette-panel" aria-label="顏色選擇">
+        <section class="palette-panel" aria-label="Color picker">
           <div class="palette" id="palette"></div>
         </section>
 
-        <section class="machine" aria-label="遊戲盤">
+        <section class="machine" aria-label="Game board">
           <div class="board-wrap">
             <div class="board" id="board"></div>
           </div>
           <div class="machine-bottom">
             <div class="display" id="attemptDisplay">1/7</div>
-            <button class="judge-button" type="button" id="judgeButton">判定</button>
-            <button class="reset-button" type="button" id="resetButton">重來</button>
+            <button class="judge-button" type="button" id="judgeButton">Check</button>
+            <button class="reset-button" type="button" id="resetButton">Reset</button>
           </div>
         </section>
 
         <section class="details-grid">
           <article class="panel-section">
             <div class="section-row">
-              <h2>提示規則</h2>
+              <h2>Clue Rules</h2>
             </div>
-            <p class="rule-note" id="ruleNote">每格下方顯示提示：綠色位置正確，白色顏色正確但位置錯，黑色不在答案中。</p>
-            <div class="clue-row"><span class="sample-line green"></span><p>顏色與位置都正確</p></div>
-            <div class="clue-row"><span class="sample-line white"></span><p>顏色正確，位置錯誤</p></div>
-            <div class="clue-row"><span class="sample-line black"></span><p>答案沒有此顏色</p></div>
+            <p class="rule-note" id="ruleNote">Each slot shows a clue below it: green means right color and right spot, white means right color in the wrong spot, black means the color is not in the answer.</p>
+            <div class="clue-row"><span class="sample-line green"></span><p>Right color, right spot</p></div>
+            <div class="clue-row"><span class="sample-line white"></span><p>Right color, wrong spot</p></div>
+            <div class="clue-row"><span class="sample-line black"></span><p>Color is not in the answer</p></div>
           </article>
 
           <article class="panel-section">
             <div class="section-row">
-              <h2>本關排行</h2>
-              <button class="text-button" type="button" id="clearRank">清除</button>
+              <h2>Level Ranking</h2>
+              <button class="text-button" type="button" id="clearRank">Clear</button>
             </div>
             <ol class="ranking" id="ranking"></ol>
           </article>
         </section>
 
-        <section class="keyboard-hint" aria-label="鍵盤操作">
-          <span>← → 選格</span>
-          <span>↑ ↓ 換色</span>
-          <span>Enter / Space 判定</span>
+        <section class="keyboard-hint" aria-label="Keyboard controls">
+          <span>Left / Right: slot</span>
+          <span>Up / Down: color</span>
+          <span>Enter / Space: check</span>
         </section>
       </section>
     </main>
 
     <dialog id="resultDialog" class="result-dialog">
       <form method="dialog">
-        <p class="screen-kicker" id="resultKicker">通關</p>
-        <h2 id="resultTitle">密碼已破譯</h2>
+        <p class="screen-kicker" id="resultKicker">Solved</p>
+        <h2 id="resultTitle">Code Cracked</h2>
         <p id="resultDetail"></p>
         <div class="dialog-actions">
-          <button type="button" class="secondary-button" id="dialogReplay">再玩一次</button>
-          <button type="button" class="judge-button" id="dialogNext">下一關</button>
+          <button type="button" class="secondary-button" id="dialogReplay">Play Again</button>
+          <button type="button" class="judge-button" id="dialogNext">Next Level</button>
         </div>
       </form>
     </dialog>

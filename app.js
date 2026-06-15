@@ -1,11 +1,11 @@
 const palette = [
-  { name: "紅", hex: "#ff5757", glow: "rgba(255, 87, 87, 0.72)" },
-  { name: "綠", hex: "#24dd61", glow: "rgba(36, 221, 97, 0.72)" },
-  { name: "橙", hex: "#ff8b3d", glow: "rgba(255, 139, 61, 0.72)" },
-  { name: "藍", hex: "#2e9cff", glow: "rgba(46, 156, 255, 0.72)" },
-  { name: "黃", hex: "#ffd943", glow: "rgba(255, 217, 67, 0.72)" },
-  { name: "紫", hex: "#7862e8", glow: "rgba(120, 98, 232, 0.72)" },
-  { name: "青", hex: "#15c7e6", glow: "rgba(21, 199, 230, 0.72)" },
+  { name: "red", hex: "#ff5757", glow: "rgba(255, 87, 87, 0.72)" },
+  { name: "green", hex: "#24dd61", glow: "rgba(36, 221, 97, 0.72)" },
+  { name: "orange", hex: "#ff8b3d", glow: "rgba(255, 139, 61, 0.72)" },
+  { name: "blue", hex: "#2e9cff", glow: "rgba(46, 156, 255, 0.72)" },
+  { name: "yellow", hex: "#ffd943", glow: "rgba(255, 217, 67, 0.72)" },
+  { name: "purple", hex: "#7862e8", glow: "rgba(120, 98, 232, 0.72)" },
+  { name: "cyan", hex: "#15c7e6", glow: "rgba(21, 199, 230, 0.72)" },
 ];
 
 const maxAttempts = 7;
@@ -49,6 +49,10 @@ function formatTime(ms) {
   const minutes = String(Math.floor(total / 60)).padStart(2, "0");
   const seconds = String(total % 60).padStart(2, "0");
   return `${minutes}:${seconds}`;
+}
+
+function formatMoves(moves) {
+  return `${moves} ${moves === 1 ? "move" : "moves"}`;
 }
 
 function storageKey() {
@@ -150,7 +154,7 @@ function stopTimer() {
 
 function updateBestTime() {
   const best = getRanks()[0];
-  bestTimeEl.textContent = best ? `最佳 ${formatTime(best.time)}` : "最佳 --:--";
+  bestTimeEl.textContent = best ? `Best ${formatTime(best.time)}` : "Best --:--";
 }
 
 function renderLevelOptions() {
@@ -170,7 +174,7 @@ function renderPalette() {
     button.type = "button";
     button.className = `palette-button${state.selectedColor === index ? " active" : ""}`;
     button.style.setProperty("--swatch", color.hex);
-    button.setAttribute("aria-label", `選擇${color.name}色`);
+    button.setAttribute("aria-label", `Choose ${color.name}`);
     button.addEventListener("click", () => {
       state.selectedColor = index;
       setCurrentSlotColor(index);
@@ -194,7 +198,7 @@ function renderBoard() {
       const peg = document.createElement("button");
       peg.type = "button";
       peg.className = "peg";
-      peg.setAttribute("aria-label", `第 ${rowIndex + 1} 步第 ${slotIndex + 1} 格`);
+      peg.setAttribute("aria-label", `Attempt ${rowIndex + 1}, slot ${slotIndex + 1}`);
 
       if (colorIndex !== null && colorIndex !== undefined) {
         peg.classList.add("filled");
@@ -253,14 +257,14 @@ function renderRanks() {
   if (!ranks.length) {
     const empty = document.createElement("li");
     empty.className = "empty-rank";
-    empty.textContent = "本關還沒有通關紀錄";
+    empty.textContent = "No clears on this level yet";
     rankingEl.append(empty);
     return;
   }
 
   ranks.forEach((rank) => {
     const item = document.createElement("li");
-    item.innerHTML = `<strong>${formatTime(rank.time)}</strong> / ${rank.moves} 步`;
+    item.innerHTML = `<strong>${formatTime(rank.time)}</strong> / ${formatMoves(rank.moves)}`;
     rankingEl.append(item);
   });
 }
@@ -271,10 +275,10 @@ function renderMeta() {
   levelRange.value = String(state.level);
   levelSelect.value = String(state.level);
   attemptDisplay.textContent = state.solved ? "OK" : `${Math.min(state.activeRow + 1, maxAttempts)}/${maxAttempts}`;
-  modeLabel.textContent = state.mode === "easy" ? "簡單規則" : "難規則";
+  modeLabel.textContent = state.mode === "easy" ? "Easy Rules" : "Hard Rules";
   ruleNote.textContent = state.mode === "easy"
-    ? "每格下方顯示提示：綠色位置正確，白色顏色正確但位置錯，黑色不在答案中。"
-    : "右側圓點只顯示數量：綠點位置正確，白點顏色正確但位置錯，黑點不在答案中。";
+    ? "Each slot shows a clue below it: green means right color and right spot, white means right color in the wrong spot, black means the color is not in the answer."
+    : "The dots on the right show only totals: green dots are right color and right spot, white dots are right color in the wrong spot, black dots are colors not in the answer.";
 
   document.querySelectorAll(".segment").forEach((button) => {
     button.classList.toggle("active", button.dataset.mode === state.mode);
@@ -314,7 +318,7 @@ function submitGuess() {
   if (state.solved || state.screen !== "game") return;
   const guess = state.guesses[state.activeRow] || [];
   if (guess.length !== codeLength || guess.some((color) => color === null || color === undefined)) {
-    flashAttempt("填滿");
+    flashAttempt("Fill");
     return;
   }
 
@@ -369,12 +373,12 @@ function loseGame() {
 }
 
 function showResult(won) {
-  const answerText = state.answer.map((index) => palette[index].name).join("、");
-  resultKicker.textContent = won ? "通關" : "挑戰失敗";
-  resultTitle.textContent = won ? "密碼已破譯" : "步數用完";
+  const answerText = state.answer.map((index) => palette[index].name).join(", ");
+  resultKicker.textContent = won ? "Solved" : "Case Failed";
+  resultTitle.textContent = won ? "Code Cracked" : "No Moves Left";
   resultDetail.textContent = won
-    ? `${formatTime(state.elapsedMs)}，第 ${state.activeRow + 1} 步完成。`
-    : `答案是 ${answerText}。重來會保留同一關答案。`;
+    ? `${formatTime(state.elapsedMs)}, solved in ${formatMoves(state.activeRow + 1)}.`
+    : `The answer was ${answerText}. Reset keeps the same level answer.`;
 
   if (typeof resultDialog.showModal === "function") {
     resultDialog.showModal();
