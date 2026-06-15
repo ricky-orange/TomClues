@@ -1,6 +1,6 @@
 # Tom Clues
 
-Tom Clues is a mini game collection website / app prototype. The first playable game is Mastermind.
+Tom Clues is a mini game collection website / app prototype. The playable games are Mastermind and Bulls & Cows.
 
 ## Current Scope
 
@@ -8,8 +8,10 @@ Tom Clues is a mini game collection website / app prototype. The first playable 
 - Bright, bold, card-based casual game style.
 - Hanging detective silhouette with a subtle floating animation.
 - Mastermind game screen with Easy and Hard clue modes.
+- Bulls & Cows game screen with 4-digit A/B clues.
 - 100 levels, 7-move limit, timer, and per-level local ranking.
-- Mouse and keyboard controls: left/right selects a slot, up/down changes color, Enter or Space checks the guess.
+- 100 Bulls & Cows levels, 10-guess limit, timer, and per-level local ranking.
+- Mouse and keyboard controls for both games.
 
 ## Local Testing
 

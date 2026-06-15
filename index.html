@@ -27,7 +27,7 @@
         <section class="games-section">
           <div class="section-title">
             <h1>Choose a Puzzle</h1>
-            <p>Solve quick puzzles with Tom Clues.</p>
+            <p>Follow the clues.<br />Solve the challenge.</p>
           </div>
           <div class="game-grid">
             <button class="game-card mastermind-card" type="button" data-open-game="mastermind">
@@ -39,12 +39,13 @@
               <span class="game-badge">PLAY</span>
             </button>
 
-            <button class="game-card find-card" type="button" disabled>
-              <span class="game-art find-art" aria-hidden="true">
-                <i></i><b></b><em></em>
+            <button class="game-card bulls-card" type="button" data-open-game="bulls">
+              <span class="game-art bulls-art" aria-hidden="true">
+                <i>1</i><i>7</i><i>3</i><i>9</i>
+                <b>2A</b><b>1B</b>
               </span>
-              <span class="game-title">FIND<br />MATCH</span>
-              <span class="game-badge">SOON</span>
+              <span class="game-title">BULLS<br />COWS</span>
+              <span class="game-badge">PLAY</span>
             </button>
 
             <button class="game-card number-card" type="button" disabled>
@@ -134,6 +135,74 @@
         <section class="keyboard-hint" aria-label="Keyboard controls">
           <span>Left / Right: slot</span>
           <span>Up / Down: color</span>
+          <span>Enter / Space: check</span>
+        </section>
+      </section>
+
+      <section class="game-screen is-hidden" id="bullsScreen" aria-label="Bulls and Cows game">
+        <header class="game-header">
+          <button class="back-button" type="button" id="bullsBackHome" aria-label="Back to home">&lt;</button>
+          <div>
+            <p class="screen-kicker">Tom Clues Case 002</p>
+            <h1>Bulls & Cows</h1>
+          </div>
+          <div class="timer-card">
+            <span>Digits</span>
+            <strong id="bullsTimer">00:00</strong>
+            <small id="bullsBestTime">Best --:--</small>
+          </div>
+        </header>
+
+        <section class="game-controls" aria-label="Bulls and Cows level">
+          <div class="level-strip">
+            <button class="small-button" type="button" id="bullsPrevLevel" aria-label="Previous level">&lt;</button>
+            <label>
+              <span id="bullsLevelText">Lv. 001</span>
+              <select id="bullsLevelSelect" aria-label="Select level"></select>
+            </label>
+            <button class="small-button" type="button" id="bullsNextLevel" aria-label="Next level">&gt;</button>
+          </div>
+          <input id="bullsLevelRange" type="range" min="1" max="100" value="1" aria-label="Level slider" />
+        </section>
+
+        <section class="machine number-machine" aria-label="Bulls and Cows board">
+          <div class="number-display" id="bullsGuessDisplay" aria-label="Current guess">
+            <span>_</span><span>_</span><span>_</span><span>_</span>
+          </div>
+          <div class="bulls-board-wrap">
+            <div class="bulls-board" id="bullsBoard"></div>
+          </div>
+          <div class="number-pad" id="bullsKeypad" aria-label="Number pad"></div>
+          <div class="machine-bottom">
+            <div class="display" id="bullsAttemptDisplay">1/10</div>
+            <button class="judge-button" type="button" id="bullsCheckButton">Check</button>
+            <button class="reset-button" type="button" id="bullsResetButton">Reset</button>
+          </div>
+        </section>
+
+        <section class="details-grid">
+          <article class="panel-section">
+            <div class="section-row">
+              <h2>Clue Rules</h2>
+            </div>
+            <p class="rule-note">Find the 4-digit code. Digits do not repeat.</p>
+            <div class="clue-row"><span class="ab-sample">A</span><p>Right digit, right spot</p></div>
+            <div class="clue-row"><span class="ab-sample">B</span><p>Right digit, wrong spot</p></div>
+            <div class="clue-row"><span class="ab-sample">0</span><p>No matching digit</p></div>
+          </article>
+
+          <article class="panel-section">
+            <div class="section-row">
+              <h2>Level Ranking</h2>
+              <button class="text-button" type="button" id="bullsClearRank">Clear</button>
+            </div>
+            <ol class="ranking" id="bullsRanking"></ol>
+          </article>
+        </section>
+
+        <section class="keyboard-hint" aria-label="Keyboard controls">
+          <span>0-9: enter digit</span>
+          <span>Backspace: erase</span>
           <span>Enter / Space: check</span>
         </section>
       </section>

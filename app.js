@@ -26,8 +26,24 @@ const state = {
   screen: "home",
 };
 
+const bullsMaxAttempts = 10;
+const bullsCodeLength = 4;
+const bullsState = {
+  level: 1,
+  currentGuess: [],
+  guesses: [],
+  feedbacks: [],
+  answer: [],
+  activeRow: 0,
+  startedAt: 0,
+  elapsedMs: 0,
+  timerId: 0,
+  solved: false,
+};
+
 const homeScreen = document.querySelector("#homeScreen");
 const gameScreen = document.querySelector("#gameScreen");
+const bullsScreen = document.querySelector("#bullsScreen");
 const board = document.querySelector("#board");
 const paletteEl = document.querySelector("#palette");
 const timerEl = document.querySelector("#timer");
@@ -43,6 +59,18 @@ const resultDialog = document.querySelector("#resultDialog");
 const resultTitle = document.querySelector("#resultTitle");
 const resultDetail = document.querySelector("#resultDetail");
 const resultKicker = document.querySelector("#resultKicker");
+const bullsTimerEl = document.querySelector("#bullsTimer");
+const bullsBestTimeEl = document.querySelector("#bullsBestTime");
+const bullsLevelRange = document.querySelector("#bullsLevelRange");
+const bullsLevelSelect = document.querySelector("#bullsLevelSelect");
+const bullsLevelText = document.querySelector("#bullsLevelText");
+const bullsGuessDisplay = document.querySelector("#bullsGuessDisplay");
+const bullsBoard = document.querySelector("#bullsBoard");
+const bullsKeypad = document.querySelector("#bullsKeypad");
+const bullsAttemptDisplay = document.querySelector("#bullsAttemptDisplay");
+const bullsRankingEl = document.querySelector("#bullsRanking");
+
+let activeDialogGame = "mastermind";
 
 function formatTime(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -59,6 +87,10 @@ function storageKey() {
   return `tom-clues:mastermind:${state.mode}:level:${state.level}`;
 }
 
+function bullsStorageKey() {
+  return `tom-clues:bulls-cows:level:${bullsState.level}`;
+}
+
 function getRanks() {
   try {
     return JSON.parse(localStorage.getItem(storageKey()) || "[]");
@@ -69,6 +101,18 @@ function getRanks() {
 
 function setRanks(ranks) {
   localStorage.setItem(storageKey(), JSON.stringify(ranks.slice(0, 10)));
+}
+
+function getBullsRanks() {
+  try {
+    return JSON.parse(localStorage.getItem(bullsStorageKey()) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function setBullsRanks(ranks) {
+  localStorage.setItem(bullsStorageKey(), JSON.stringify(ranks.slice(0, 10)));
 }
 
 function seededRandom(seed) {
@@ -86,6 +130,19 @@ function generateAnswer(level, mode) {
   const answer = [];
 
   while (answer.length < codeLength) {
+    const pick = Math.floor(random() * pool.length);
+    answer.push(pool.splice(pick, 1)[0]);
+  }
+
+  return answer;
+}
+
+function generateBullsAnswer(level) {
+  const random = seededRandom(level * 104729 + 49979687);
+  const pool = Array.from({ length: 10 }, (_, index) => index);
+  const answer = [];
+
+  while (answer.length < bullsCodeLength) {
     const pick = Math.floor(random() * pool.length);
     answer.push(pool.splice(pick, 1)[0]);
   }
@@ -120,24 +177,50 @@ function evaluateGuess(guess, answer) {
   return { marks, green, white, black: codeLength - green - white };
 }
 
+function evaluateBullsGuess(guess, answer) {
+  let a = 0;
+  let b = 0;
+
+  guess.forEach((digit, index) => {
+    if (digit === answer[index]) {
+      a += 1;
+    } else if (answer.includes(digit)) {
+      b += 1;
+    }
+  });
+
+  return { a, b };
+}
+
 function showScreen(screen) {
   state.screen = screen;
   homeScreen.classList.toggle("is-hidden", screen !== "home");
-  gameScreen.classList.toggle("is-hidden", screen !== "game");
-  document.body.classList.toggle("in-game", screen === "game");
+  gameScreen.classList.toggle("is-hidden", screen !== "mastermind");
+  bullsScreen.classList.toggle("is-hidden", screen !== "bulls");
+  document.body.classList.toggle("in-game", screen !== "home");
 
   if (screen === "home") {
     stopTimer();
+    stopBullsTimer();
     if (resultDialog.open) resultDialog.close();
   }
 }
 
 function ensureTimer() {
-  if (state.startedAt || state.solved || state.screen !== "game") return;
+  if (state.startedAt || state.solved || state.screen !== "mastermind") return;
   state.startedAt = Date.now() - state.elapsedMs;
   state.timerId = window.setInterval(() => {
     state.elapsedMs = Date.now() - state.startedAt;
     timerEl.textContent = formatTime(state.elapsedMs);
+  }, 250);
+}
+
+function ensureBullsTimer() {
+  if (bullsState.startedAt || bullsState.solved || state.screen !== "bulls") return;
+  bullsState.startedAt = Date.now() - bullsState.elapsedMs;
+  bullsState.timerId = window.setInterval(() => {
+    bullsState.elapsedMs = Date.now() - bullsState.startedAt;
+    bullsTimerEl.textContent = formatTime(bullsState.elapsedMs);
   }, 250);
 }
 
@@ -152,18 +235,40 @@ function stopTimer() {
   timerEl.textContent = formatTime(state.elapsedMs);
 }
 
+function stopBullsTimer() {
+  if (bullsState.timerId) {
+    clearInterval(bullsState.timerId);
+    bullsState.timerId = 0;
+  }
+  if (bullsState.startedAt) {
+    bullsState.elapsedMs = Date.now() - bullsState.startedAt;
+  }
+  bullsTimerEl.textContent = formatTime(bullsState.elapsedMs);
+}
+
 function updateBestTime() {
   const best = getRanks()[0];
   bestTimeEl.textContent = best ? `Best ${formatTime(best.time)}` : "Best --:--";
 }
 
+function updateBullsBestTime() {
+  const best = getBullsRanks()[0];
+  bullsBestTimeEl.textContent = best ? `Best ${formatTime(best.time)}` : "Best --:--";
+}
+
 function renderLevelOptions() {
   levelSelect.innerHTML = "";
+  bullsLevelSelect.innerHTML = "";
   for (let level = 1; level <= 100; level += 1) {
     const option = document.createElement("option");
     option.value = String(level);
     option.textContent = `Lv. ${String(level).padStart(3, "0")}`;
     levelSelect.append(option);
+
+    const bullsOption = document.createElement("option");
+    bullsOption.value = String(level);
+    bullsOption.textContent = `Lv. ${String(level).padStart(3, "0")}`;
+    bullsLevelSelect.append(bullsOption);
   }
 }
 
@@ -269,6 +374,25 @@ function renderRanks() {
   });
 }
 
+function renderBullsRanks() {
+  const ranks = getBullsRanks();
+  bullsRankingEl.innerHTML = "";
+
+  if (!ranks.length) {
+    const empty = document.createElement("li");
+    empty.className = "empty-rank";
+    empty.textContent = "No clears on this level yet";
+    bullsRankingEl.append(empty);
+    return;
+  }
+
+  ranks.forEach((rank) => {
+    const item = document.createElement("li");
+    item.innerHTML = `<strong>${formatTime(rank.time)}</strong> / ${formatMoves(rank.moves)}`;
+    bullsRankingEl.append(item);
+  });
+}
+
 function renderMeta() {
   const levelName = `Lv. ${String(state.level).padStart(3, "0")}`;
   levelText.textContent = levelName;
@@ -285,12 +409,80 @@ function renderMeta() {
   });
 }
 
+function renderBullsGuessDisplay() {
+  bullsGuessDisplay.innerHTML = "";
+  for (let index = 0; index < bullsCodeLength; index += 1) {
+    const slot = document.createElement("span");
+    slot.textContent = bullsState.currentGuess[index] ?? "_";
+    bullsGuessDisplay.append(slot);
+  }
+}
+
+function renderBullsBoard() {
+  bullsBoard.innerHTML = "";
+
+  for (let rowIndex = 0; rowIndex < bullsMaxAttempts; rowIndex += 1) {
+    const row = document.createElement("div");
+    row.className = "bulls-row";
+
+    const guess = document.createElement("div");
+    guess.className = "bulls-guess";
+    const digits = bullsState.guesses[rowIndex] || Array(bullsCodeLength).fill("_");
+    digits.forEach((digit) => {
+      const slot = document.createElement("span");
+      slot.textContent = digit;
+      guess.append(slot);
+    });
+
+    const clue = document.createElement("div");
+    clue.className = "bulls-clue";
+    const feedback = bullsState.feedbacks[rowIndex];
+    clue.textContent = feedback ? `${feedback.a}A ${feedback.b}B` : "--";
+
+    row.append(guess, clue);
+    bullsBoard.append(row);
+  }
+}
+
+function renderBullsKeypad() {
+  bullsKeypad.innerHTML = "";
+  const used = new Set(bullsState.currentGuess);
+
+  for (let digit = 0; digit <= 9; digit += 1) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "digit-button";
+    button.textContent = String(digit);
+    button.disabled = used.has(digit) || bullsState.solved;
+    button.setAttribute("aria-label", `Enter ${digit}`);
+    button.addEventListener("click", () => addBullsDigit(digit));
+    bullsKeypad.append(button);
+  }
+}
+
+function renderBullsMeta() {
+  const levelName = `Lv. ${String(bullsState.level).padStart(3, "0")}`;
+  bullsLevelText.textContent = levelName;
+  bullsLevelRange.value = String(bullsState.level);
+  bullsLevelSelect.value = String(bullsState.level);
+  bullsAttemptDisplay.textContent = bullsState.solved ? "OK" : `${Math.min(bullsState.activeRow + 1, bullsMaxAttempts)}/${bullsMaxAttempts}`;
+}
+
 function render() {
   renderPalette();
   renderBoard();
   renderRanks();
   renderMeta();
   updateBestTime();
+}
+
+function renderBulls() {
+  renderBullsGuessDisplay();
+  renderBullsBoard();
+  renderBullsKeypad();
+  renderBullsRanks();
+  renderBullsMeta();
+  updateBullsBestTime();
 }
 
 function setCurrentSlotColor(colorIndex) {
@@ -315,7 +507,7 @@ function moveColor(direction) {
 }
 
 function submitGuess() {
-  if (state.solved || state.screen !== "game") return;
+  if (state.solved || state.screen !== "mastermind") return;
   const guess = state.guesses[state.activeRow] || [];
   if (guess.length !== codeLength || guess.some((color) => color === null || color === undefined)) {
     flashAttempt("Fill");
@@ -342,6 +534,61 @@ function submitGuess() {
   render();
 }
 
+function addBullsDigit(digit) {
+  if (bullsState.solved || state.screen !== "bulls") return;
+  if (bullsState.currentGuess.length >= bullsCodeLength) return;
+  if (bullsState.currentGuess.includes(digit)) {
+    flashBullsAttempt("Unique");
+    return;
+  }
+
+  ensureBullsTimer();
+  bullsState.currentGuess.push(digit);
+  renderBulls();
+}
+
+function removeBullsDigit() {
+  if (bullsState.solved || state.screen !== "bulls") return;
+  bullsState.currentGuess.pop();
+  renderBulls();
+}
+
+function submitBullsGuess() {
+  if (bullsState.solved || state.screen !== "bulls") return;
+  if (bullsState.currentGuess.length !== bullsCodeLength) {
+    flashBullsAttempt("Fill");
+    return;
+  }
+
+  ensureBullsTimer();
+  const guess = [...bullsState.currentGuess];
+  const feedback = evaluateBullsGuess(guess, bullsState.answer);
+  bullsState.guesses[bullsState.activeRow] = guess;
+  bullsState.feedbacks[bullsState.activeRow] = feedback;
+  bullsState.currentGuess = [];
+
+  if (feedback.a === bullsCodeLength) {
+    winBullsGame();
+    return;
+  }
+
+  if (bullsState.activeRow >= bullsMaxAttempts - 1) {
+    loseBullsGame();
+    return;
+  }
+
+  bullsState.activeRow += 1;
+  renderBulls();
+}
+
+function flashBullsAttempt(text) {
+  const original = bullsAttemptDisplay.textContent;
+  bullsAttemptDisplay.textContent = text;
+  window.setTimeout(() => {
+    bullsAttemptDisplay.textContent = original;
+  }, 650);
+}
+
 function flashAttempt(text) {
   const original = attemptDisplay.textContent;
   attemptDisplay.textContent = text;
@@ -351,6 +598,7 @@ function flashAttempt(text) {
 }
 
 function winGame() {
+  activeDialogGame = "mastermind";
   state.solved = true;
   stopTimer();
   const ranks = getRanks();
@@ -366,10 +614,35 @@ function winGame() {
 }
 
 function loseGame() {
+  activeDialogGame = "mastermind";
   stopTimer();
   state.solved = true;
   showResult(false);
   render();
+}
+
+function winBullsGame() {
+  activeDialogGame = "bulls";
+  bullsState.solved = true;
+  stopBullsTimer();
+  const ranks = getBullsRanks();
+  ranks.push({
+    time: bullsState.elapsedMs,
+    moves: bullsState.activeRow + 1,
+    date: new Date().toISOString(),
+  });
+  ranks.sort((a, b) => a.time - b.time || a.moves - b.moves);
+  setBullsRanks(ranks);
+  showBullsResult(true);
+  renderBulls();
+}
+
+function loseBullsGame() {
+  activeDialogGame = "bulls";
+  stopBullsTimer();
+  bullsState.solved = true;
+  showBullsResult(false);
+  renderBulls();
 }
 
 function showResult(won) {
@@ -378,6 +651,19 @@ function showResult(won) {
   resultTitle.textContent = won ? "Code Cracked" : "No Moves Left";
   resultDetail.textContent = won
     ? `${formatTime(state.elapsedMs)}, solved in ${formatMoves(state.activeRow + 1)}.`
+    : `The answer was ${answerText}. Reset keeps the same level answer.`;
+
+  if (typeof resultDialog.showModal === "function") {
+    resultDialog.showModal();
+  }
+}
+
+function showBullsResult(won) {
+  const answerText = bullsState.answer.join("");
+  resultKicker.textContent = won ? "Solved" : "Case Failed";
+  resultTitle.textContent = won ? "Code Cracked" : "No Moves Left";
+  resultDetail.textContent = won
+    ? `${formatTime(bullsState.elapsedMs)}, solved in ${formatMoves(bullsState.activeRow + 1)}.`
     : `The answer was ${answerText}. Reset keeps the same level answer.`;
 
   if (typeof resultDialog.showModal === "function") {
@@ -400,9 +686,28 @@ function resetGame({ keepElapsed = false } = {}) {
   render();
 }
 
+function resetBullsGame({ keepElapsed = false } = {}) {
+  stopBullsTimer();
+  bullsState.answer = generateBullsAnswer(bullsState.level);
+  bullsState.currentGuess = [];
+  bullsState.guesses = [];
+  bullsState.feedbacks = [];
+  bullsState.activeRow = 0;
+  bullsState.startedAt = 0;
+  bullsState.elapsedMs = keepElapsed ? bullsState.elapsedMs : 0;
+  bullsState.solved = false;
+  bullsTimerEl.textContent = formatTime(bullsState.elapsedMs);
+  renderBulls();
+}
+
 function setLevel(level) {
   state.level = Math.min(100, Math.max(1, Number(level)));
   resetGame();
+}
+
+function setBullsLevel(level) {
+  bullsState.level = Math.min(100, Math.max(1, Number(level)));
+  resetBullsGame();
 }
 
 function setMode(mode) {
@@ -415,13 +720,24 @@ function clearRank() {
   render();
 }
 
+function clearBullsRank() {
+  localStorage.removeItem(bullsStorageKey());
+  renderBulls();
+}
+
 function bindEvents() {
   document.querySelector("[data-open-game='mastermind']").addEventListener("click", () => {
-    showScreen("game");
+    showScreen("mastermind");
     render();
   });
 
+  document.querySelector("[data-open-game='bulls']").addEventListener("click", () => {
+    showScreen("bulls");
+    renderBulls();
+  });
+
   document.querySelector("#backHome").addEventListener("click", () => showScreen("home"));
+  document.querySelector("#bullsBackHome").addEventListener("click", () => showScreen("home"));
 
   document.querySelectorAll(".segment").forEach((button) => {
     button.addEventListener("click", () => setMode(button.dataset.mode));
@@ -434,30 +750,59 @@ function bindEvents() {
   document.querySelector("#judgeButton").addEventListener("click", submitGuess);
   document.querySelector("#resetButton").addEventListener("click", () => resetGame());
   document.querySelector("#clearRank").addEventListener("click", clearRank);
+  bullsLevelRange.addEventListener("input", (event) => setBullsLevel(event.target.value));
+  bullsLevelSelect.addEventListener("change", (event) => setBullsLevel(event.target.value));
+  document.querySelector("#bullsPrevLevel").addEventListener("click", () => setBullsLevel(bullsState.level - 1));
+  document.querySelector("#bullsNextLevel").addEventListener("click", () => setBullsLevel(bullsState.level + 1));
+  document.querySelector("#bullsCheckButton").addEventListener("click", submitBullsGuess);
+  document.querySelector("#bullsResetButton").addEventListener("click", () => resetBullsGame());
+  document.querySelector("#bullsClearRank").addEventListener("click", clearBullsRank);
   document.querySelector("#dialogReplay").addEventListener("click", () => {
     resultDialog.close();
-    resetGame();
+    if (activeDialogGame === "bulls") {
+      resetBullsGame();
+    } else {
+      resetGame();
+    }
   });
   document.querySelector("#dialogNext").addEventListener("click", () => {
     resultDialog.close();
-    setLevel(state.level === 100 ? 1 : state.level + 1);
+    if (activeDialogGame === "bulls") {
+      setBullsLevel(bullsState.level === 100 ? 1 : bullsState.level + 1);
+    } else {
+      setLevel(state.level === 100 ? 1 : state.level + 1);
+    }
   });
 
   window.addEventListener("keydown", (event) => {
-    const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", " "];
+    const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", " ", "Backspace", "Delete"];
+    const isDigit = /^[0-9]$/.test(event.key);
+    if (state.screen === "bulls" && isDigit) {
+      event.preventDefault();
+      addBullsDigit(Number(event.key));
+      return;
+    }
     if (!keys.includes(event.key)) return;
-    if (state.screen !== "game") return;
+    if (state.screen === "home") return;
     event.preventDefault();
 
-    if (event.key === "ArrowLeft") moveSlot(-1);
-    if (event.key === "ArrowRight") moveSlot(1);
-    if (event.key === "ArrowUp") moveColor(-1);
-    if (event.key === "ArrowDown") moveColor(1);
-    if (event.key === "Enter" || event.key === " ") submitGuess();
+    if (state.screen === "mastermind") {
+      if (event.key === "ArrowLeft") moveSlot(-1);
+      if (event.key === "ArrowRight") moveSlot(1);
+      if (event.key === "ArrowUp") moveColor(-1);
+      if (event.key === "ArrowDown") moveColor(1);
+      if (event.key === "Enter" || event.key === " ") submitGuess();
+    }
+
+    if (state.screen === "bulls") {
+      if (event.key === "Backspace" || event.key === "Delete") removeBullsDigit();
+      if (event.key === "Enter" || event.key === " ") submitBullsGuess();
+    }
   });
 }
 
 renderLevelOptions();
 bindEvents();
 resetGame();
+resetBullsGame();
 showScreen("home");

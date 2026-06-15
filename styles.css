@@ -213,6 +213,10 @@ p {
   background: linear-gradient(135deg, #ffcf45 0 35%, #28c7e5 35% 62%, #ff5a5f 62% 100%);
 }
 
+.bulls-card {
+  background: linear-gradient(135deg, #ffcf45 0 35%, #28c7e5 35% 62%, #ff5a5f 62% 100%);
+}
+
 .number-card {
   background: linear-gradient(135deg, #8f73ff 0 50%, #34bf68 50% 100%);
 }
@@ -253,6 +257,7 @@ p {
 .mastermind-art b:nth-child(8) { background: #27313a; }
 
 .find-art,
+.bulls-art,
 .number-art,
 .words-art {
   display: grid;
@@ -286,6 +291,42 @@ p {
   border: 6px solid var(--line);
   border-radius: 8px;
   transform: translate(-62px, -52px) rotate(16deg);
+}
+
+.bulls-art {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr 48px;
+  gap: 10px;
+  padding: 16px;
+}
+
+.bulls-art i,
+.bulls-art b {
+  display: grid;
+  place-items: center;
+  border: 5px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--line);
+  font-style: normal;
+  font-weight: 1000;
+  box-shadow: inset 0 5px 0 rgba(255, 255, 255, 0.35);
+}
+
+.bulls-art i {
+  min-height: 64px;
+  font-size: 2.1rem;
+}
+
+.bulls-art i:nth-child(1) { background: #ff5757; color: white; }
+.bulls-art i:nth-child(2) { background: #ffd943; }
+.bulls-art i:nth-child(3) { background: #15c7e6; color: white; }
+.bulls-art i:nth-child(4) { background: #3cb85b; color: white; }
+
+.bulls-art b {
+  grid-column: span 2;
+  background: var(--yellow);
+  font-size: 1.45rem;
 }
 
 .number-art i,
@@ -498,6 +539,10 @@ p {
   box-shadow: 0 13px 0 rgba(39, 49, 58, 0.17);
 }
 
+.number-machine {
+  background: linear-gradient(135deg, #51c8ff, #ff6868);
+}
+
 .board-wrap {
   padding: 12px;
   border: 6px solid var(--line);
@@ -508,6 +553,105 @@ p {
 .board {
   display: grid;
   gap: 7px;
+}
+
+.number-display {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.number-display span {
+  display: grid;
+  place-items: center;
+  min-height: 58px;
+  border: 5px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--line);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 2rem;
+  font-weight: 1000;
+  box-shadow: inset 0 5px 0 rgba(255, 255, 255, 0.35);
+}
+
+.bulls-board-wrap {
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 6px solid var(--line);
+  border-radius: 8px;
+  background: #111719;
+}
+
+.bulls-board {
+  display: grid;
+  gap: 8px;
+}
+
+.bulls-row {
+  display: grid;
+  grid-template-columns: 1fr 92px;
+  gap: 8px;
+  align-items: center;
+}
+
+.bulls-guess,
+.bulls-clue {
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  border: 4px solid #050707;
+  border-radius: 8px;
+  font-family: Consolas, "Courier New", monospace;
+  font-weight: 1000;
+}
+
+.bulls-guess {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 5px;
+  background: #30383b;
+  color: white;
+  font-size: 1.25rem;
+}
+
+.bulls-guess span {
+  display: grid;
+  place-items: center;
+  min-height: 30px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.bulls-clue {
+  background: var(--yellow);
+  color: var(--line);
+  font-size: 1.2rem;
+}
+
+.number-pad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.digit-button {
+  min-height: 48px;
+  border: 5px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--line);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 1.35rem;
+  font-weight: 1000;
+  box-shadow: 0 5px 0 rgba(39, 49, 58, 0.18);
+}
+
+.digit-button:disabled {
+  opacity: 0.42;
 }
 
 .guess-row {
@@ -698,6 +842,17 @@ p {
   margin-top: 8px;
 }
 
+.ab-sample {
+  display: grid;
+  place-items: center;
+  height: 32px;
+  border: 4px solid var(--line);
+  border-radius: 8px;
+  background: var(--yellow);
+  color: var(--line);
+  font-weight: 1000;
+}
+
 .clue-row p {
   margin: 0;
   color: var(--ink);
@@ -880,6 +1035,26 @@ p {
     padding: 8px;
     max-height: 320px;
     overflow-y: auto;
+  }
+
+  .bulls-board-wrap {
+    max-height: 300px;
+    padding: 8px;
+  }
+
+  .bulls-row {
+    grid-template-columns: 1fr 76px;
+    gap: 6px;
+  }
+
+  .number-display span {
+    min-height: 48px;
+    font-size: 1.6rem;
+  }
+
+  .digit-button {
+    min-height: 42px;
+    border-width: 4px;
   }
 
   .guess-row {
