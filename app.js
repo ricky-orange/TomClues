@@ -124,6 +124,8 @@ const resultDialog = document.querySelector("#resultDialog");
 const resultTitle = document.querySelector("#resultTitle");
 const resultDetail = document.querySelector("#resultDetail");
 const resultKicker = document.querySelector("#resultKicker");
+const infoDialog = document.querySelector("#infoDialog");
+const infoDialogBody = document.querySelector("#infoDialogBody");
 const bullsTimerEl = document.querySelector("#bullsTimer");
 const bullsBestTimeEl = document.querySelector("#bullsBestTime");
 const bullsLevelRange = document.querySelector("#bullsLevelRange");
@@ -1461,6 +1463,21 @@ function clearSlideRank() {
   renderSlide();
 }
 
+function openInfoDialog(screenId) {
+  const source = document.querySelector(`#${screenId} .details-grid`);
+  if (!source) return;
+
+  const copy = source.cloneNode(true);
+  copy.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+  copy.querySelectorAll(".text-button").forEach((button) => button.remove());
+  infoDialogBody.innerHTML = "";
+  infoDialogBody.append(copy);
+
+  if (typeof infoDialog.showModal === "function") {
+    infoDialog.showModal();
+  }
+}
+
 function bindEvents() {
   document.querySelector("[data-open-game='mastermind']").addEventListener("click", () => {
     showScreen("mastermind");
@@ -1497,6 +1514,10 @@ function bindEvents() {
 
   document.querySelectorAll(".segment[data-slide-mode]").forEach((button) => {
     button.addEventListener("click", () => setSlideMode(button.dataset.slideMode));
+  });
+
+  document.querySelectorAll("[data-info-target]").forEach((button) => {
+    button.addEventListener("click", () => openInfoDialog(button.dataset.infoTarget));
   });
 
   levelRange.addEventListener("input", (event) => setLevel(event.target.value));

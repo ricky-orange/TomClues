@@ -559,6 +559,15 @@ p {
   color: white;
 }
 
+.info-button {
+  min-height: 42px;
+  border: 4px solid var(--line);
+  border-radius: 8px;
+  background: #e8f4fb;
+  color: var(--line);
+  font-weight: 1000;
+}
+
 .machine {
   position: relative;
   width: min(100%, 520px);
@@ -1142,6 +1151,63 @@ p {
   font-weight: 1000;
 }
 
+.info-dialog {
+  width: min(620px, calc(100% - 24px));
+  max-height: min(760px, calc(100% - 24px));
+  border: 6px solid var(--line);
+  border-radius: 8px;
+  padding: 0;
+  color: var(--ink);
+  background: white;
+  box-shadow: 0 20px 0 rgba(39, 49, 58, 0.22);
+}
+
+.info-dialog::backdrop {
+  background: rgba(39, 49, 58, 0.58);
+}
+
+.info-dialog form {
+  max-height: min(740px, calc(100vh - 40px));
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.info-dialog-header {
+  position: sticky;
+  top: -16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -16px -16px 14px;
+  padding: 14px 16px;
+  border-bottom: 4px solid var(--line);
+  background: white;
+}
+
+.info-dialog-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 1000;
+}
+
+.close-button {
+  width: 44px;
+  height: 44px;
+  border: 4px solid var(--line);
+  border-radius: 8px;
+  background: var(--red);
+  color: white;
+  font-weight: 1000;
+}
+
+.info-dialog .details-grid {
+  display: grid;
+  width: 100%;
+  margin: 0;
+}
+
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -1185,9 +1251,11 @@ p {
   }
 
   .section-title {
-    align-items: start;
-    flex-direction: column;
-    gap: 5px;
+    display: none;
+  }
+
+  .games-section {
+    margin-top: 82px;
   }
 
   .game-grid {
@@ -1212,15 +1280,56 @@ p {
   .details-grid {
     grid-template-columns: 1fr;
   }
+
+  .game-screen > .details-grid,
+  .keyboard-hint {
+    display: none;
+  }
+
+  .info-dialog .details-grid {
+    display: grid;
+  }
 }
 
 @media (max-width: 430px) {
+  .home-screen,
+  .game-screen {
+    padding: max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+  }
+
+  .brand-sign {
+    min-height: 54px;
+    padding: 6px 10px;
+  }
+
+  .brand-sign p {
+    font-size: 1.65rem;
+  }
+
+  .brand-sign strong {
+    font-size: 0.7rem;
+  }
+
+  .spy-scene {
+    top: 48px;
+    width: 112px;
+    height: 82px;
+  }
+
+  .spy {
+    width: 112px;
+  }
+
+  .games-section {
+    margin-top: 68px;
+  }
+
   .game-grid {
     gap: 12px;
   }
 
   .game-card {
-    min-height: 178px;
+    min-height: 166px;
     padding: 10px;
   }
 
@@ -1237,8 +1346,83 @@ p {
     font-size: 0.78rem;
   }
 
+  .game-header {
+    grid-template-columns: 46px minmax(0, 1fr) 94px;
+    margin-bottom: 8px;
+  }
+
+  .back-button {
+    width: 46px;
+    height: 46px;
+    border-width: 4px;
+    font-size: 2rem;
+  }
+
+  .screen-kicker {
+    display: none;
+  }
+
+  .game-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .timer-card {
+    padding: 6px;
+    border-width: 4px;
+  }
+
+  .timer-card span,
+  .timer-card small {
+    font-size: 0.62rem;
+  }
+
+  .timer-card strong {
+    font-size: 1.15rem;
+  }
+
+  .game-controls {
+    gap: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-width: 4px;
+    box-shadow: 0 6px 0 rgba(39, 49, 58, 0.12);
+  }
+
+  .level-strip {
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
+    gap: 7px;
+  }
+
+  .small-button {
+    min-height: 38px;
+    border-width: 4px;
+  }
+
+  .level-strip label {
+    grid-template-columns: 72px 1fr;
+    gap: 6px;
+  }
+
+  #levelSelect,
+  #bullsLevelSelect,
+  #wordsLevelSelect,
+  #slideLevelSelect {
+    height: 36px;
+    border-width: 3px;
+  }
+
+  .segment,
+  .practice-button,
+  .info-button {
+    min-height: 36px;
+    border-width: 3px;
+    font-size: 0.82rem;
+  }
+
   .machine {
     padding: 10px;
+    margin-bottom: 8px;
+    border-width: 6px;
   }
 
   .board-wrap {
@@ -1258,8 +1442,9 @@ p {
   }
 
   .number-display span {
-    min-height: 48px;
-    font-size: 1.6rem;
+    min-height: 42px;
+    border-width: 4px;
+    font-size: 1.45rem;
   }
 
   .digit-button {
@@ -1268,7 +1453,7 @@ p {
   }
 
   .word-board-wrap {
-    max-height: 360px;
+    max-height: 280px;
     padding: 8px;
   }
 
@@ -1336,10 +1521,41 @@ p {
   }
 
   .machine-bottom {
-    grid-template-columns: 1fr 80px;
+    grid-template-columns: 1fr 76px 68px;
+    gap: 7px;
+    margin-top: 8px;
   }
 
-  .reset-button {
-    grid-column: 1 / -1;
+  .display {
+    min-height: 44px;
+    border-width: 4px;
+    font-size: 1.35rem;
+  }
+
+  .judge-button,
+  .reset-button,
+  .secondary-button,
+  .text-button {
+    min-height: 42px;
+    border-width: 4px;
+    font-size: 0.86rem;
+  }
+
+  .palette-panel {
+    position: static;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-width: 4px;
+  }
+
+  .palette-button {
+    min-height: 30px;
+    border-width: 4px;
+  }
+
+  .info-dialog {
+    width: calc(100% - 18px);
+    max-height: calc(100% - 18px);
+    border-width: 5px;
   }
 }

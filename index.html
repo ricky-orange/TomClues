@@ -95,6 +95,7 @@
             <button class="segment active" type="button" data-mode="easy">Easy</button>
             <button class="segment" type="button" data-mode="hard">Hard</button>
           </div>
+          <button class="info-button" type="button" data-info-target="gameScreen">Rules & Scores</button>
         </section>
 
         <section class="palette-panel" aria-label="Color picker">
@@ -163,6 +164,7 @@
             <button class="small-button" type="button" id="bullsNextLevel" aria-label="Next level">&gt;</button>
           </div>
           <input id="bullsLevelRange" type="range" min="1" max="100" value="1" aria-label="Level slider" />
+          <button class="info-button" type="button" data-info-target="bullsScreen">Rules & Scores</button>
         </section>
 
         <section class="machine number-machine" aria-label="Bulls and Cows board">
@@ -236,6 +238,7 @@
             <button class="segment" type="button" data-word-mode="normal">Normal</button>
             <button class="segment" type="button" data-word-mode="hard">Hard</button>
           </div>
+          <button class="info-button" type="button" data-info-target="wordsScreen">Rules & Scores</button>
         </section>
 
         <section class="machine word-machine" aria-label="Word Clues board">
@@ -308,6 +311,7 @@
             <button class="segment" type="button" data-slide-mode="hell">Hell</button>
           </div>
           <button class="practice-button" type="button" id="slidePracticeButton">Practice Off</button>
+          <button class="info-button" type="button" data-info-target="slideScreen">Rules & Scores</button>
         </section>
 
         <section class="machine slide-machine" aria-label="Sliding Puzzle board">
@@ -358,6 +362,19 @@
           <button type="button" class="secondary-button" id="dialogReplay">Play Again</button>
           <button type="button" class="judge-button" id="dialogNext">Next Level</button>
         </div>
+      </form>
+    </dialog>
+
+    <dialog id="infoDialog" class="info-dialog">
+      <form method="dialog">
+        <div class="info-dialog-header">
+          <div>
+            <p class="screen-kicker">Tom Clues</p>
+            <h2>Rules & Scores</h2>
+          </div>
+          <button type="submit" class="close-button" aria-label="Close">x</button>
+        </div>
+        <div id="infoDialogBody"></div>
       </form>
     </dialog>
 
